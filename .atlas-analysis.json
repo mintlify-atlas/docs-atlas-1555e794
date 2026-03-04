@@ -1,0 +1,100 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "ROS2 Installer CLI",
+  "projectDescription": "Command-line tool to install ROS2 on Ubuntu natively or any OS via Docker",
+  "theme": "aspen",
+  "primaryColor": "#22D3EE",
+  "lightColor": "#7DD3FC",
+  "darkColor": "#0E7490",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Installation Modes",
+            "pages": [
+              "modes/native-ubuntu",
+              "modes/docker-based"
+            ]
+          },
+          {
+            "group": "Usage Guide",
+            "pages": [
+              "usage/interactive-mode",
+              "usage/silent-mode",
+              "usage/configuration"
+            ]
+          },
+          {
+            "group": "Command Reference",
+            "pages": [
+              "commands/overview",
+              "commands/options",
+              "commands/examples"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/package-sets",
+              "advanced/ros-distributions",
+              "advanced/troubleshooting",
+              "advanced/logging"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Configuration",
+            "pages": [
+              "reference/config-schema",
+              "reference/yaml-options"
+            ]
+          },
+          {
+            "group": "System Requirements",
+            "pages": [
+              "reference/requirements",
+              "reference/compatibility"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Interactive and silent installation modes",
+    "Native Ubuntu installation via apt packages",
+    "Docker-based installation for non-Ubuntu systems",
+    "Support for multiple ROS2 distributions (kilted, jazzy, iron, humble, rolling)",
+    "Multiple package sets (minimal, base, desktop, desktop-full)",
+    "System validation and verification",
+    "Automatic rollback on installation failure",
+    "YAML-based configuration",
+    "Comprehensive logging and error handling",
+    "Homebrew installation support"
+  ],
+  "publicApiSurface": [
+    "ros2-installer (main command)",
+    "--ros-distro <distro> (specify ROS2 distribution)",
+    "--package-set <set> (minimal, base, desktop, desktop-full)",
+    "--silent (non-interactive mode)",
+    "--dry-run (simulate installation)",
+    "--validate-only (check system requirements)",
+    "--show-config (display configuration)",
+    "--config <file> (custom YAML config)",
+    "--log-level <level> (DEBUG, INFO, WARNING, ERROR)"
+  ]
+}
