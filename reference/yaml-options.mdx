@@ -1,0 +1,431 @@
+---
+title: YAML Configuration Options
+description: Detailed documentation of all YAML configuration options for ROS2 Installer CLI
+---
+
+This page documents every configuration option available in the ROS2 Installer CLI YAML configuration file.
+
+## Installation Section
+
+Controls the core ROS2 installation process.
+
+<ParamField path="installation.ros_distro" type="string" default="kilted" required>
+  The ROS2 distribution to install.
+  
+  **Valid values**: `kilted`, `jazzy`, `iron`, `humble`, `rolling`
+  
+  **Example**:
+  ```yaml
+  installation:
+    ros_distro: "humble"
+  ```
+</ParamField>
+
+<ParamField path="installation.package_set" type="string" default="desktop-full">
+  The package set determines which ROS2 packages are installed.
+  
+  **Valid values**:
+  - `minimal`: Core ROS2 packages only (`ros-core`, `ros2cli`)
+  - `base`: Base packages with demo nodes
+  - `desktop`: Desktop packages including RViz2
+  - `desktop-full`: Complete desktop installation with all tools
+  
+  **Example**:
+  ```yaml
+  installation:
+    package_set: "desktop"
+  ```
+</ParamField>
+
+<ParamField path="installation.uninstall_existing" type="boolean" default={true}>
+  Whether to uninstall existing ROS installations before proceeding.
+  
+  When enabled, the installer removes all existing ROS1 and ROS2 packages (melodic, noetic, foxy, galactic, humble, iron, jazzy, kilted).
+  
+  **Example**:
+  ```yaml
+  installation:
+    uninstall_existing: false  # Keep existing installations
+  ```
+</ParamField>
+
+<ParamField path="installation.parallel_jobs" type="integer" default={4}>
+  Number of parallel jobs for installation operations.
+  
+  **Note**: While this setting is available, apt/dpkg installations are sequential for safety. This primarily affects build operations.
+  
+  **Example**:
+  ```yaml
+  installation:
+    parallel_jobs: 8  # Use 8 parallel jobs
+  ```
+</ParamField>
+
+<ParamField path="installation.retry_attempts" type="integer" default={3}>
+  Number of times to retry failed commands before giving up.
+  
+  The installer uses exponential backoff between retry attempts.
+  
+  **Example**:
+  ```yaml
+  installation:
+    retry_attempts: 5  # Retry up to 5 times
+  ```
+</ParamField>
+
+<ParamField path="installation.timeout_seconds" type="integer" default={300}>
+  Timeout in seconds for individual commands.
+  
+  **Note**: Desktop-full installations use a longer timeout (1200 seconds) regardless of this setting.
+  
+  **Example**:
+  ```yaml
+  installation:
+    timeout_seconds: 600  # 10 minute timeout
+  ```
+</ParamField>
+
+## System Section
+
+Controls system-level operations and modifications.
+
+<ParamField path="system.update_system" type="boolean" default={true}>
+  Whether to update system packages before installation.
+  
+  Runs `apt-get update` to refresh the package index.
+  
+  **Example**:
+  ```yaml
+  system:
+    update_system: true
+  ```
+</ParamField>
+
+<ParamField path="system.install_dependencies" type="boolean" default={true}>
+  Whether to install required system dependencies.
+  
+  Installs essential packages: `software-properties-common`, `curl`, `wget`, `gnupg2`, `lsb-release`, `apt-transport-https`, `ca-certificates`
+  
+  **Example**:
+  ```yaml
+  system:
+    install_dependencies: true
+  ```
+</ParamField>
+
+<ParamField path="system.backup_configs" type="boolean" default={true}>
+  Whether to backup configuration files before modification.
+  
+  Creates backup files with the session ID (e.g., `.bashrc.backup.a1b2c3d4`).
+  
+  **Example**:
+  ```yaml
+  system:
+    backup_configs: true
+  ```
+</ParamField>
+
+<ParamField path="system.verify_compatibility" type="boolean" default={true}>
+  Whether to verify system compatibility before installation.
+  
+  Checks disk space, memory, architecture, and Ubuntu version.
+  
+  **Example**:
+  ```yaml
+  system:
+    verify_compatibility: true
+  ```
+</ParamField>
+
+## Logging Section
+
+Configures the logging system for installation tracking.
+
+<ParamField path="logging.level" type="string" default="INFO" required>
+  The logging level for the installation process.
+  
+  **Valid values**: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+  
+  **Example**:
+  ```yaml
+  logging:
+    level: "DEBUG"  # Verbose logging
+  ```
+</ParamField>
+
+<ParamField path="logging.file" type="string" default="/tmp/ros2_installation.log" required>
+  Path to the log file.
+  
+  If the path is not writable, the installer falls back to `~/ros2_installation_<session_id>.log`.
+  
+  **Example**:
+  ```yaml
+  logging:
+    file: "~/logs/ros2_install.log"
+  ```
+</ParamField>
+
+<ParamField path="logging.console" type="boolean" default={true}>
+  Whether to display log messages in the console.
+  
+  **Example**:
+  ```yaml
+  logging:
+    console: false  # Log to file only
+  ```
+</ParamField>
+
+## Validation Section
+
+Defines system requirements and validation rules.
+
+<ParamField path="validation.min_disk_space_gb" type="number" default={4}>
+  Minimum required disk space in gigabytes.
+  
+  Installation will fail if available disk space is below this threshold.
+  
+  **Example**:
+  ```yaml
+  validation:
+    min_disk_space_gb: 10  # Require 10GB free
+  ```
+</ParamField>
+
+<ParamField path="validation.min_memory_gb" type="number" default={2}>
+  Minimum required memory in gigabytes.
+  
+  Installation will fail if system memory is below this threshold.
+  
+  **Example**:
+  ```yaml
+  validation:
+    min_memory_gb: 4  # Require 4GB RAM
+  ```
+</ParamField>
+
+<ParamField path="validation.required_ubuntu_version" type="string" default="24.04">
+  The required Ubuntu version for native installation.
+  
+  **Note**: Only applies to Ubuntu systems. Non-Ubuntu systems use Docker mode.
+  
+  **Example**:
+  ```yaml
+  validation:
+    required_ubuntu_version: "22.04"
+  ```
+</ParamField>
+
+<ParamField path="validation.supported_architectures" type="array" default='["amd64", "arm64", "aarch64", "x86_64"]'>
+  List of supported CPU architectures.
+  
+  Installation will fail if the system architecture is not in this list.
+  
+  **Example**:
+  ```yaml
+  validation:
+    supported_architectures: ["amd64", "arm64"]
+  ```
+</ParamField>
+
+## Performance Section
+
+Optimization settings for installation performance.
+
+<ParamField path="performance.parallel_downloads" type="boolean" default={true}>
+  Whether to enable parallel package downloads.
+  
+  Improves download speeds by fetching multiple packages simultaneously.
+  
+  **Example**:
+  ```yaml
+  performance:
+    parallel_downloads: true
+  ```
+</ParamField>
+
+<ParamField path="performance.download_cache" type="boolean" default={true}>
+  Whether to cache downloaded packages.
+  
+  Speeds up reinstallations by reusing previously downloaded packages.
+  
+  **Example**:
+  ```yaml
+  performance:
+    download_cache: true
+  ```
+</ParamField>
+
+<ParamField path="performance.compression" type="boolean" default={true}>
+  Whether to use compression for downloads.
+  
+  Reduces bandwidth usage at the cost of slightly higher CPU usage.
+  
+  **Example**:
+  ```yaml
+  performance:
+    compression: false  # Disable compression
+  ```
+</ParamField>
+
+## Security Section
+
+Security-related settings for package verification and auditing.
+
+<ParamField path="security.verify_signatures" type="boolean" default={true}>
+  Whether to verify package signatures.
+  
+  Ensures packages are from trusted sources.
+  
+  **Example**:
+  ```yaml
+  security:
+    verify_signatures: true
+  ```
+</ParamField>
+
+<ParamField path="security.check_checksums" type="boolean" default={true}>
+  Whether to verify package checksums.
+  
+  Ensures package integrity during download.
+  
+  **Example**:
+  ```yaml
+  security:
+    check_checksums: true
+  ```
+</ParamField>
+
+<ParamField path="security.secure_permissions" type="boolean" default={true}>
+  Whether to set secure file permissions.
+  
+  Ensures configuration files have appropriate permissions.
+  
+  **Example**:
+  ```yaml
+  security:
+    secure_permissions: true
+  ```
+</ParamField>
+
+<ParamField path="security.audit_logging" type="boolean" default={true}>
+  Whether to enable audit logging.
+  
+  Logs all system modifications for security auditing.
+  
+  **Example**:
+  ```yaml
+  security:
+    audit_logging: true
+  ```
+</ParamField>
+
+## Docker Section
+
+Docker-specific configuration used when installing on non-Ubuntu systems.
+
+<ParamField path="docker.container_name" type="string" default="ros2-kilted">
+  Name of the Docker container to create.
+  
+  The container name is derived from the ROS distribution if not specified.
+  
+  **Example**:
+  ```yaml
+  docker:
+    container_name: "my-ros2-container"
+  ```
+</ParamField>
+
+<ParamField path="docker.workspace_dir" type="string" default="~/ros2_ws">
+  Path to the ROS2 workspace directory on the host.
+  
+  This directory is mounted into the container at `/root/ros2_ws`.
+  
+  **Example**:
+  ```yaml
+  docker:
+    workspace_dir: "~/projects/ros2_workspace"
+  ```
+</ParamField>
+
+<ParamField path="docker.network_mode" type="string" default="host">
+  Docker network mode for the container.
+  
+  **Valid values**: `host`, `bridge`, `none`
+  
+  `host` mode provides best performance for ROS2 networking.
+  
+  **Example**:
+  ```yaml
+  docker:
+    network_mode: "bridge"
+  ```
+</ParamField>
+
+## Complete Example
+
+Here's a complete configuration file with custom values:
+
+```yaml
+# Custom ROS2 Installation Configuration
+
+installation:
+  ros_distro: "humble"
+  package_set: "desktop"
+  uninstall_existing: false
+  parallel_jobs: 8
+  retry_attempts: 5
+  timeout_seconds: 600
+
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+
+logging:
+  level: "DEBUG"
+  file: "~/logs/ros2_install.log"
+  console: true
+
+validation:
+  min_disk_space_gb: 10
+  min_memory_gb: 4
+  required_ubuntu_version: "24.04"
+  supported_architectures: ["amd64", "arm64"]
+
+performance:
+  parallel_downloads: true
+  download_cache: true
+  compression: true
+
+security:
+  verify_signatures: true
+  check_checksums: true
+  secure_permissions: true
+  audit_logging: true
+
+docker:
+  container_name: "ros2-dev"
+  workspace_dir: "~/ros2_projects"
+  network_mode: "host"
+```
+
+## Configuration Loading
+
+The configuration is loaded in the following order:
+
+1. Default configuration is created if no file exists (see `_create_default_config` at line 114)
+2. Configuration file is loaded and parsed as YAML
+3. Configuration is validated (see `_validate_configuration` at line 163)
+4. Command-line arguments override configuration values
+
+## Error Handling
+
+The installer raises a `ConfigurationError` exception if:
+
+- The configuration file cannot be read
+- The YAML/JSON format is invalid
+- Required sections are missing
+- The `ros_distro` value is invalid
+
+All configuration errors are logged and displayed to the user before the installation process begins.

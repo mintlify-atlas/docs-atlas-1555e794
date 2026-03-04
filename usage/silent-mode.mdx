@@ -1,0 +1,385 @@
+---
+title: Silent Mode
+description: Automated, non-interactive installation using command-line flags
+---
+
+# Silent Mode
+
+Silent mode enables fully automated, non-interactive installations perfect for CI/CD pipelines, deployment scripts, and batch installations.
+
+## Enabling Silent Mode
+
+Add the `--silent` (or `-s`) flag to skip all interactive prompts:
+
+```bash
+sudo python3 ros2_installer_cli.py --silent
+```
+
+In silent mode:
+- No confirmation prompts are shown
+- Installation proceeds automatically
+- All decisions use configuration file defaults
+- Progress is still logged to console and log file
+
+## Command-Line Flags
+
+### Installation Options
+
+#### Package Set Selection
+
+Choose which ROS2 packages to install:
+
+```bash
+--package-set {minimal,base,desktop,desktop-full}
+-p {minimal,base,desktop,desktop-full}
+```
+
+**Options:**
+- `minimal` - ROS2 core and CLI tools only
+- `base` - Core + demo nodes and basic packages
+- `desktop` - Base + RViz2 and desktop tools
+- `desktop-full` - Everything (default)
+
+**Example:**
+```bash
+sudo python3 ros2_installer_cli.py --silent --package-set base
+```
+
+#### ROS Distribution Selection
+
+Specify which ROS2 distribution to install:
+
+```bash
+--ros-distro {kilted,jazzy,iron,humble,rolling}
+-d {kilted,jazzy,iron,humble,rolling}
+```
+
+**Supported Distributions:**
+- `kilted` (default) - ROS2 Kilted Kaiju
+- `jazzy` - ROS2 Jazzy Jalisco
+- `iron` - ROS2 Iron Irwini
+- `humble` - ROS2 Humble Hawksbill
+- `rolling` - ROS2 Rolling Ridley (latest)
+
+**Example:**
+```bash
+sudo python3 ros2_installer_cli.py --silent --ros-distro jazzy
+```
+
+### Configuration Options
+
+#### Custom Configuration File
+
+Use a custom YAML configuration file:
+
+```bash
+--config CONFIG_FILE
+-c CONFIG_FILE
+```
+
+**Example:**
+```bash
+sudo python3 ros2_installer_cli.py --silent --config production_config.yaml
+```
+
+#### Parallel Jobs
+
+Set the number of parallel jobs for installation:
+
+```bash
+--parallel-jobs N
+-j N
+```
+
+**Example:**
+```bash
+sudo python3 ros2_installer_cli.py --silent --parallel-jobs 4
+```
+
+### Logging Options
+
+#### Log Level
+
+Control verbosity of log output:
+
+```bash
+--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+```
+
+**Log Levels:**
+- `DEBUG` - Detailed debugging information
+- `INFO` - General informational messages (default)
+- `WARNING` - Warning messages only
+- `ERROR` - Error messages only
+- `CRITICAL` - Critical errors only
+
+**Example:**
+```bash
+sudo python3 ros2_installer_cli.py --silent --log-level ERROR
+```
+
+### Special Modes
+
+#### Validate Only
+
+Check system requirements without installing:
+
+```bash
+--validate-only
+```
+
+**Example:**
+```bash
+sudo python3 ros2_installer_cli.py --validate-only
+```
+
+**Output:**
+```
+🔍 Validating system requirements...
+📊 System Information:
+  • OS: Linux 6.8.0-49-generic
+  • Architecture: x86_64
+  • Memory: 15.5 GB
+  • Disk Space: 50.2 GB
+✅ System validation passed
+```
+
+#### Dry Run
+
+Simulate installation without making changes:
+
+```bash
+--dry-run
+```
+
+**Example:**
+```bash
+sudo python3 ros2_installer_cli.py --dry-run
+```
+
+**Output:**
+```
+🧪 DRY RUN MODE - No changes will be made
+System validation and configuration check only
+[System information displayed]
+✅ Dry run completed successfully
+```
+
+#### Show Configuration
+
+Display current configuration and exit:
+
+```bash
+--show-config
+```
+
+**Example:**
+```bash
+sudo python3 ros2_installer_cli.py --show-config
+```
+
+**Output:**
+```yaml
+installation:
+  ros_distro: kilted
+  package_set: desktop-full
+  uninstall_existing: true
+  parallel_jobs: 1
+  retry_attempts: 3
+  timeout_seconds: 1200
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+# ... (full configuration)
+```
+
+### Version Information
+
+Display version and exit:
+
+```bash
+--version
+```
+
+**Output:**
+```
+ROS2 CLI Installer v2.1.0
+```
+
+## Complete Silent Mode Examples
+
+### Minimal Installation
+
+```bash
+sudo python3 ros2_installer_cli.py \
+  --silent \
+  --package-set minimal \
+  --log-level WARNING
+```
+
+Installs only ROS2 core with minimal logging.
+
+### Custom Distribution
+
+```bash
+sudo python3 ros2_installer_cli.py \
+  --silent \
+  --ros-distro humble \
+  --package-set desktop
+```
+
+Installs ROS2 Humble with desktop packages.
+
+### Production Deployment
+
+```bash
+sudo python3 ros2_installer_cli.py \
+  --silent \
+  --config production.yaml \
+  --log-level ERROR \
+  --parallel-jobs 4
+```
+
+Uses production configuration with error-only logging and parallel jobs.
+
+### CI/CD Pipeline
+
+```bash
+#!/bin/bash
+# Install ROS2 in CI/CD environment
+
+sudo python3 ros2_installer_cli.py \
+  --silent \
+  --package-set base \
+  --log-level INFO \
+  || exit 1
+
+echo "ROS2 installation complete"
+```
+
+### Development Environment
+
+```bash
+sudo python3 ros2_installer_cli.py \
+  --silent \
+  --ros-distro jazzy \
+  --package-set desktop-full \
+  --log-level DEBUG
+```
+
+Installs latest distribution with full logging for troubleshooting.
+
+### Validation Before Installation
+
+```bash
+#!/bin/bash
+# Validate system first, then install if valid
+
+sudo python3 ros2_installer_cli.py --validate-only
+if [ $? -eq 0 ]; then
+  sudo python3 ros2_installer_cli.py --silent
+else
+  echo "System validation failed"
+  exit 1
+fi
+```
+
+## Flag Combinations
+
+You can combine multiple flags:
+
+```bash
+# Combine package set, distribution, and logging
+sudo python3 ros2_installer_cli.py \
+  --silent \
+  --ros-distro jazzy \
+  --package-set desktop \
+  --log-level WARNING \
+  --parallel-jobs 2
+
+# Use config file with overrides
+sudo python3 ros2_installer_cli.py \
+  --silent \
+  --config base_config.yaml \
+  --package-set desktop-full \
+  --log-level INFO
+```
+
+Command-line flags override configuration file settings.
+
+## Exit Codes
+
+Silent mode uses standard exit codes:
+
+- `0` - Success
+- `1` - Failure or user cancellation
+
+**Example usage in scripts:**
+```bash
+sudo python3 ros2_installer_cli.py --silent
+if [ $? -eq 0 ]; then
+  echo "Installation successful"
+else
+  echo "Installation failed"
+  exit 1
+fi
+```
+
+## Output and Logging
+
+Even in silent mode:
+- Progress is logged to console (configurable with `--log-level`)
+- Full details are written to log file
+- Session ID is generated for tracking
+- Installation summary is displayed at completion
+
+**Example output:**
+```bash
+$ sudo python3 ros2_installer_cli.py --silent --package-set base
+2026-03-04 10:30:15 - INFO - 🚀 ROS2 CLI Installer v2.1.0
+2026-03-04 10:30:15 - INFO - Session ID: a3f9b2c1
+2026-03-04 10:30:15 - INFO - 🔍 Validating system requirements...
+2026-03-04 10:30:15 - INFO - ✅ System validation passed
+2026-03-04 10:30:16 - INFO - 🔄 Updating system packages...
+2026-03-04 10:30:18 - INFO - ✅ Updating package index (took 2.35s)
+2026-03-04 10:30:18 - INFO - 📁 Setting up ROS2 repositories...
+2026-03-04 10:35:42 - INFO - 🎉 Installation completed successfully in 327.12 seconds
+2026-03-04 10:35:42 - INFO - 📊 Summary: 45 packages installed in 327.12 seconds
+```
+
+## When to Use Silent Mode
+
+- Continuous Integration/Continuous Deployment (CI/CD)
+- Automated deployment scripts
+- Batch installations on multiple machines
+- Container image builds
+- Remote installations
+- Scripted environment setup
+- Production deployments where manual intervention is not desired
+
+## Best Practices
+
+1. **Test First**: Always run `--validate-only` or `--dry-run` before silent installation
+2. **Log Everything**: Use `--log-level DEBUG` during initial testing
+3. **Error Handling**: Check exit codes in scripts
+4. **Configuration Files**: Use configuration files for complex setups
+5. **Backup**: Ensure `backup_configs: true` in configuration
+6. **Session Tracking**: Save session IDs for troubleshooting
+
+## Troubleshooting
+
+If silent installation fails:
+
+1. Check the log file: `/tmp/ros2_installation.log`
+2. Run with `--log-level DEBUG` for detailed output
+3. Try `--validate-only` to check system requirements
+4. Use `--dry-run` to simulate without changes
+5. Review exit code for error type
+
+## Next Steps
+
+- Learn about [Configuration Files](/usage/configuration) for advanced customization
+- Review [Interactive Mode](/usage/interactive-mode) for manual installations

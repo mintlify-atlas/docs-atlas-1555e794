@@ -1,0 +1,165 @@
+---
+title: Package Sets
+description: Understanding ROS2 package set options for different installation needs
+---
+
+# Package Sets
+
+The ROS2 Installer CLI supports four different package sets, allowing you to choose the installation scope based on your requirements.
+
+## Available Package Sets
+
+### Minimal
+
+The minimal installation includes only the core ROS2 components and CLI tools.
+
+**Packages installed:**
+- `ros-{distro}-ros-core` - Core ROS2 runtime
+- `ros-{distro}-ros2cli` - ROS2 command-line interface
+
+**Use case:** Ideal for embedded systems, CI/CD environments, or when you need the smallest possible footprint.
+
+**Disk space:** ~500 MB
+
+```bash
+sudo python3 ros2_installer_cli.py --package-set minimal
+```
+
+### Base
+
+The base installation adds demo nodes and additional CLI functionality on top of the minimal set.
+
+**Packages installed:**
+- `ros-{distro}-ros-base` - Base ROS2 packages
+- `ros-{distro}-ros2cli` - ROS2 command-line interface
+- `ros-{distro}-demo-nodes-cpp` - C++ demo nodes
+- `ros-{distro}-demo-nodes-py` - Python demo nodes
+
+**Use case:** Good for headless servers, robot controllers, or development without visualization needs.
+
+**Disk space:** ~1 GB
+
+```bash
+sudo python3 ros2_installer_cli.py --package-set base
+```
+
+### Desktop
+
+The desktop installation includes visualization tools and GUI components.
+
+**Packages installed:**
+- `ros-{distro}-desktop` - Desktop packages including visualization
+- `ros-{distro}-rviz2` - 3D visualization tool
+
+**Additional packages (best-effort):**
+- `ros-{distro}-gazebo-ros-pkgs` - Gazebo simulator integration
+- `ros-{distro}-navigation2` - Navigation stack
+- `ros-{distro}-moveit` - Motion planning framework
+- `ros-{distro}-slam-toolbox` - SLAM algorithms
+- `ros-{distro}-robot-localization` - Localization packages
+
+**Use case:** Development workstations where visualization and simulation are needed.
+
+**Disk space:** ~3 GB
+
+```bash
+sudo python3 ros2_installer_cli.py --package-set desktop
+```
+
+<Note>
+Additional packages are installed with best-effort. If an optional package fails to install, the installation continues with a warning logged.
+</Note>
+
+### Desktop-Full (Default)
+
+The complete installation with all desktop packages and additional tools.
+
+**Packages installed:**
+- `ros-{distro}-desktop-full` - Complete desktop environment
+
+**Additional packages (best-effort):**
+- `ros-{distro}-gazebo-ros-pkgs`
+- `ros-{distro}-navigation2`
+- `ros-{distro}-moveit`
+- `ros-{distro}-slam-toolbox`
+- `ros-{distro}-robot-localization`
+
+**Use case:** Full-featured development environment with all tools and simulators.
+
+**Disk space:** ~4+ GB
+
+**Installation timeout:** 20 minutes (longer than other sets)
+
+```bash
+sudo python3 ros2_installer_cli.py --package-set desktop-full
+# or simply
+sudo python3 ros2_installer_cli.py  # desktop-full is the default
+```
+
+## Docker Mode Package Sets
+
+For non-Ubuntu systems, the installer uses Docker containers with corresponding official images:
+
+| Package Set | Docker Image |
+|------------|-------------|
+| minimal | `ros:{distro}-ros-core` |
+| base | `ros:{distro}-ros-base` |
+| desktop | `osrf/ros:{distro}-desktop` |
+| desktop-full | `osrf/ros:{distro}-desktop-full` |
+
+## Configuration
+
+You can specify the package set in your `config_cli.yaml`:
+
+```yaml
+installation:
+  ros_distro: 'kilted'
+  package_set: 'desktop-full'  # minimal, base, desktop, or desktop-full
+  uninstall_existing: true
+  parallel_jobs: 4
+  retry_attempts: 3
+  timeout_seconds: 300
+```
+
+## Development Tools
+
+All package sets include these development tools:
+
+- `python3-rosdep` - Dependency management
+- `python3-colcon-common-extensions` - Build system
+- `python3-vcstool` - Version control tools
+- `python3-argcomplete` - Shell completion
+- `python3-flake8` - Python linting
+- `python3-pytest` - Testing framework
+
+These are installed during the `_setup_development_tools` phase (source:ros2_installer_cli.py:1088-1116).
+
+## Implementation Details
+
+Package installation is handled by the `_install_packages` method (source:ros2_installer_cli.py:1045-1086):
+
+```python
+def _install_packages(self) -> int:
+    package_set = self.config['installation'].get('package_set', 'desktop-full')
+    distro = self.config['installation']['ros_distro']
+    
+    if package_set == 'minimal':
+        packages = [f"ros-{distro}-ros-core", f"ros-{distro}-ros2cli"]
+    elif package_set == 'base':
+        packages = [f"ros-{distro}-ros-base", f"ros-{distro}-ros2cli", 
+                    f"ros-{distro}-demo-nodes-cpp", f"ros-{distro}-demo-nodes-py"]
+    elif package_set == 'desktop':
+        packages = [f"ros-{distro}-desktop", f"ros-{distro}-rviz2"]
+    else:  # desktop-full
+        packages = [f"ros-{distro}-desktop-full"]
+```
+
+<Warning>
+The desktop-full package set uses an extended timeout of 1200 seconds (20 minutes) due to the large number of packages being installed.
+</Warning>
+
+## See Also
+
+- [ROS2 Distributions](/advanced/ros-distributions) - Supported ROS2 versions
+- [Troubleshooting](/advanced/troubleshooting) - Common installation issues
+- [Logging](/advanced/logging) - Installation logs and debugging

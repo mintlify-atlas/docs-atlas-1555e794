@@ -1,0 +1,323 @@
+---
+title: "Native Ubuntu Installation"
+description: "Deep dive into how ROS2 is installed natively on Ubuntu 24.04 systems"
+---
+
+## Overview
+
+The native Ubuntu installation mode is used when the installer detects Ubuntu as the operating system. This method installs ROS2 packages directly on the host system using APT package management.
+
+<Info>
+  Native installation requires **sudo privileges** and is only available on Ubuntu 24.04 systems.
+</Info>
+
+## System Detection
+
+The installer determines whether to use native installation by checking the OS:
+
+```python
+def _is_ubuntu(self) -> bool:
+    """Check if the current system is Ubuntu."""
+    return self.system_info.is_ubuntu
+
+def _is_docker_mode(self) -> bool:
+    """Check if installation should use Docker (non-Ubuntu systems)."""
+    return not self._is_ubuntu()
+```
+
+The system information is gathered by reading `/etc/os-release`:
+
+```python
+if os_name == "Linux":
+    try:
+        with open('/etc/os-release', 'r') as f:
+            os_release = f.read().lower()
+            if 'ubuntu' in os_release:
+                is_ubuntu = True
+                linux_distro = "ubuntu"
+```
+
+## Installation Flow
+
+The native installation follows these steps in `_install_ros2_native()`:
+
+### 1. System Validation
+
+```python
+if not self.validate_system():
+    raise ValidationError("System validation failed")
+```
+
+Validation checks:
+- **Disk space**: Minimum 4 GB free
+- **Memory**: Minimum 2 GB RAM
+- **Architecture**: Must be `amd64`, `arm64`, `aarch64`, or `x86_64`
+- **Ubuntu version**: Should be 24.04
+- **Sudo privileges**: Script must be run with sudo
+
+### 2. System Update
+
+Updates the APT package index and installs essential dependencies:
+
+```python
+def _update_system(self):
+    self._run_command("sudo apt-get update", "Updating package index")
+    
+    essential_packages = [
+        "software-properties-common", "curl", "wget", "gnupg2",
+        "lsb-release", "apt-transport-https", "ca-certificates"
+    ]
+    packages_str = ' '.join(essential_packages)
+    self._run_command(f"sudo apt-get install -y {packages_str}", 
+                      "Installing essential packages")
+```
+
+### 3. Uninstall Existing ROS
+
+If configured, removes any existing ROS1 or ROS2 installations:
+
+```python
+def _uninstall_existing_ros(self):
+    result = subprocess.run(
+        "dpkg -l | grep -E 'ros-(melodic|noetic|foxy|galactic|humble|iron|jazzy|kilted)'",
+        shell=True, capture_output=True, text=True
+    )
+    if result.stdout.strip():
+        self._run_command("sudo apt-get autoremove -y 'ros-*'", 
+                          "Removing ROS packages")
+        self._run_command("sudo apt-get autoremove -y", 
+                          "Cleaning up dependencies")
+```
+
+### 4. Setup ROS2 Repositories
+
+Adds the official ROS2 APT repository:
+
+```python
+def _setup_repositories(self):
+    # Add GPG key
+    self._run_command(
+        "sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key "
+        "-o /usr/share/keyrings/ros-archive-keyring.gpg",
+        "Adding ROS2 GPG key"
+    )
+    
+    # Add repository
+    distro = self.config['installation']['ros_distro']
+    arch = subprocess.run("dpkg --print-architecture", 
+                         shell=True, capture_output=True, text=True).stdout.strip()
+    codename = subprocess.run("lsb_release -cs", 
+                             shell=True, capture_output=True, text=True).stdout.strip()
+    
+    repo_line = f"deb [arch={arch} signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] "
+                f"http://packages.ros.org/ros2/ubuntu {codename} main"
+    self._run_command(f'echo "{repo_line}" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null',
+                      "Adding ROS2 repository")
+    
+    # Update package index
+    self._run_command("sudo apt-get update", 
+                      "Updating package index with ROS2 repository")
+```
+
+Repository is added to: `/etc/apt/sources.list.d/ros2.list`
+
+### 5. Install ROS2 Packages
+
+Installs the selected package set (minimal, base, desktop, or desktop-full):
+
+```python
+def _install_packages(self) -> int:
+    package_set = self.config['installation'].get('package_set', 'desktop-full')
+    distro = self.config['installation']['ros_distro']
+    
+    # Main package installation
+    if package_set == 'minimal':
+        packages = [f"ros-{distro}-ros-core", f"ros-{distro}-ros2cli"]
+    elif package_set == 'base':
+        packages = [f"ros-{distro}-ros-base", f"ros-{distro}-ros2cli", 
+                   f"ros-{distro}-demo-nodes-cpp", f"ros-{distro}-demo-nodes-py"]
+    elif package_set == 'desktop':
+        packages = [f"ros-{distro}-desktop", f"ros-{distro}-rviz2"]
+    else:  # desktop-full
+        packages = [f"ros-{distro}-desktop-full"]
+    
+    # Install with extended timeout for desktop-full (20 minutes)
+    timeout = 1200 if package_set == 'desktop-full' else None
+    self._run_command(f"sudo apt-get install -y {packages_str}", 
+                      f"Installing {package_set} packages", timeout=timeout)
+```
+
+<Note>
+  Desktop and desktop-full installations also include additional packages:
+  - `ros-{distro}-gazebo-ros-pkgs` - Gazebo simulator integration
+  - `ros-{distro}-navigation2` - Navigation stack
+  - `ros-{distro}-moveit` - Motion planning framework
+  - `ros-{distro}-slam-toolbox` - SLAM implementation
+  - `ros-{distro}-robot-localization` - Robot localization tools
+</Note>
+
+### 6. Setup Development Tools
+
+Installs Python development tools and initializes rosdep:
+
+```python
+def _setup_development_tools(self):
+    dev_packages = [
+        "python3-rosdep", 
+        "python3-colcon-common-extensions", 
+        "python3-vcstool", 
+        "python3-argcomplete",
+        "python3-flake8", 
+        "python3-pytest"
+    ]
+    
+    # Initialize rosdep (ROS dependency management)
+    if not os.path.exists('/etc/ros/rosdep/sources.list.d/20-default.list'):
+        self._run_command("sudo rosdep init", "Initializing rosdep")
+    
+    # Update rosdep database
+    original_user = os.environ.get('SUDO_USER')
+    if original_user:
+        self._run_command(f"sudo -u {original_user} rosdep update", 
+                          "Updating rosdep database")
+```
+
+### 7. Configure Environment
+
+Modifies `~/.bashrc` to source ROS2 setup on shell startup:
+
+```python
+def _configure_environment(self):
+    distro = self.config['installation']['ros_distro']
+    
+    # Add ROS2 setup to bashrc
+    ros2_setup = f"""
+# ROS2 {distro.title()} Setup - Added by CLI Installer
+source /opt/ros/{distro}/setup.bash
+export ROS_DOMAIN_ID=0
+export ROS_LOCALHOST_ONLY=0
+source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
+"""
+    
+    # Append to .bashrc
+    with open(bashrc_path, 'a') as f:
+        f.write(ros2_setup)
+```
+
+Environment variables set:
+- **ROS_DOMAIN_ID**: Set to 0 (controls DDS domain for multi-robot systems)
+- **ROS_LOCALHOST_ONLY**: Set to 0 (allows network communication)
+
+### 8. Verify Installation
+
+Tests the installation by running ROS2 commands:
+
+```python
+def _verify_installation(self):
+    distro = self.config['installation']['ros_distro']
+    ros_path = f"/opt/ros/{distro}"
+    
+    # Check ROS2 directory exists
+    if not os.path.exists(ros_path):
+        raise InstallationError(f"ROS2 directory not found: {ros_path}")
+    
+    # Test ROS2 command
+    setup_script = f"{ros_path}/setup.bash"
+    test_command = f"bash -c 'source {setup_script} && ros2 --help'"
+    self._run_command(test_command, "Testing ROS2 command", timeout=30)
+    
+    # Verify key packages
+    key_packages = [f"ros-{distro}-ros2cli", 
+                   "python3-rosdep", 
+                   "python3-colcon-common-extensions"]
+```
+
+## Error Handling and Rollback
+
+The installer includes automatic rollback on failure:
+
+```python
+@contextmanager
+def _rollback_on_failure(self):
+    initial_state = copy.deepcopy(self.installation_state)
+    try:
+        yield
+    except Exception as e:
+        self.logger.error(f"Installation failed, initiating rollback: {e}")
+        self._rollback_installation(initial_state)
+        raise
+```
+
+Rollback actions:
+1. **Remove newly installed packages**: Uninstalls packages added during the failed installation
+2. **Restore backup files**: Restores original `.bashrc` from backup
+3. **Clean package cache**: Runs `apt-get autoremove` to clean dependencies
+
+## Command Retry Logic
+
+All commands are executed with automatic retry and exponential backoff:
+
+```python
+def _run_command(self, command: str, description: str = "", 
+                 timeout: int = None, retries: int = None):
+    timeout = timeout or self.config.get('installation', {}).get('timeout_seconds', 300)
+    retries = retries or self.config.get('installation', {}).get('retry_attempts', 3)
+    
+    for attempt in range(retries):
+        try:
+            result = subprocess.run(
+                command, shell=True, check=True,
+                capture_output=True, timeout=timeout, text=True
+            )
+            return result
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+            # Clean up package management processes
+            if 'apt-get' in command or 'dpkg' in command:
+                self._cleanup_package_processes()
+            if attempt == retries - 1:
+                raise
+            # Exponential backoff
+            time.sleep(2 ** attempt)
+```
+
+## Post-Installation
+
+After successful installation:
+
+<Steps>
+  <Step title="Source the setup script">
+    ```bash
+    source ~/.bashrc
+    # Or manually:
+    source /opt/ros/kilted/setup.bash
+    ```
+  </Step>
+  
+  <Step title="Verify ROS2 is working">
+    ```bash
+    ros2 --help
+    ros2 topic list
+    ```
+  </Step>
+  
+  <Step title="Run a demo node (optional)">
+    ```bash
+    ros2 run demo_nodes_cpp talker
+    ```
+  </Step>
+</Steps>
+
+## File Locations
+
+| Component | Location |
+|-----------|----------|
+| ROS2 installation | `/opt/ros/{distro}/` |
+| Repository file | `/etc/apt/sources.list.d/ros2.list` |
+| GPG key | `/usr/share/keyrings/ros-archive-keyring.gpg` |
+| Environment setup | `~/.bashrc` |
+| Rosdep sources | `/etc/ros/rosdep/sources.list.d/20-default.list` |
+| Installation logs | `/tmp/ros2_installation.log` or `~/ros2_installation_{session_id}.log` |
+
+<Warning>
+  The native installation modifies system files and requires a restart of your shell (or sourcing `~/.bashrc`) to take effect.
+</Warning>

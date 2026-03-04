@@ -1,80 +1,663 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quick Start"
+description: "Get from installation to your first working ROS2 environment in minutes"
 ---
 
-## Get started in three steps
+## Overview
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+This guide will walk you through installing ROS2 using the CLI installer and verifying your installation works correctly.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+The installation process differs between Ubuntu (native) and other systems (Docker). The installer automatically detects your system and uses the appropriate method.
 </Note>
+
+## Quick Installation
+
+<Steps>
+  <Step title="Run the installer">
+    <Tabs>
+      <Tab title="Interactive Mode">
+        The installer will prompt you for confirmation and show detailed progress:
+
+        <CodeGroup>
+        ```bash Ubuntu
+        sudo ros2-installer
+        ```
+
+        ```bash macOS / Other Linux
+        ros2-installer
+        ```
+
+        ```bash Manual Install
+        # Ubuntu (requires sudo)
+        sudo python3 ros2_installer_cli.py
+        
+        # macOS / Other Linux
+        python3 ros2_installer_cli.py
+        ```
+        </CodeGroup>
+
+        You'll see a summary before installation begins:
+        ```
+        ============================================================
+        🤖 ROS2 Installation Summary
+        ============================================================
+          • ROS Distribution: kilted
+          • Package Set: desktop-full
+          • Install Mode: Native Ubuntu
+          • Uninstall Existing: True
+          • Parallel Jobs: 1
+        
+        📊 System Information:
+          • OS: Linux 6.8.0
+          • Architecture: x86_64
+          • Memory: 16.0 GB
+          • Disk Space: 45.2 GB
+          • CPU Cores: 8
+        
+        ⚠️  This will modify your system by:
+           - Installing ROS2 packages and dependencies
+           - Adding ROS2 repositories
+           - Modifying ~/.bashrc for environment setup
+           - Removing existing ROS installations
+        
+        ============================================================
+        🚀 Proceed with installation? [y/N]:
+        ```
+      </Tab>
+
+      <Tab title="Silent Mode">
+        For automated installations without prompts:
+
+        ```bash
+        ros2-installer --silent
+        ```
+
+        Or with specific options:
+
+        ```bash
+        ros2-installer --silent --ros-distro humble --package-set desktop
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Wait for installation">
+    The installer will:
+    
+    <Tabs>
+      <Tab title="Ubuntu (Native)">
+        1. Validate system requirements
+        2. Update system packages
+        3. Remove existing ROS installations (if configured)
+        4. Add ROS2 repositories and GPG keys
+        5. Install ROS2 packages (this takes 10-30 minutes)
+        6. Install development tools (colcon, rosdep, vcstool)
+        7. Configure your `~/.bashrc` environment
+        8. Verify installation
+
+        ```bash
+        🔍 Validating system requirements...
+        ✅ System validation passed
+        🔄 Updating system packages...
+        ✅ Updating package index (took 3.45s)
+        📁 Setting up ROS2 repositories...
+        ✅ Adding ROS2 GPG key (took 1.23s)
+        📦 Installing ROS2 kilted desktop-full packages...
+        ✅ Installing desktop-full packages (took 847.32s)
+        🛠️ Setting up development tools...
+        🌍 Configuring environment...
+        ✅ Verifying installation...
+        🎉 Installation completed successfully in 892.15 seconds
+        ```
+      </Tab>
+
+      <Tab title="Docker Mode">
+        1. Validate system requirements
+        2. Check for Docker (install if missing)
+        3. Build ROS2 Docker image (this takes 15-30 minutes)
+        4. Create persistent container
+        5. Install `ros2` wrapper script
+        6. Verify installation
+
+        ```bash
+        🔍 Validating system requirements...
+        🐳 Non-Ubuntu system detected (Darwin), will use Docker
+        ✅ System validation passed
+        🐳 Installing Docker...
+        🍺 Installing Docker via Homebrew...
+        🔨 Building Docker image 'ros2-installer/kilted:latest'...
+        ✅ Docker image built successfully
+        🐳 Creating container 'ros2-kilted'...
+        ✅ Container 'ros2-kilted' created
+        ✅ Wrapper script installed at /Users/user/.local/bin/ros2
+        ✅ Verifying Docker-based ROS2 installation...
+        🎉 Docker-based ROS2 kilted installation completed in 1245.67s
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Verify installation">
+    After installation completes, verify ROS2 is working:
+
+    <Tabs>
+      <Tab title="Ubuntu">
+        ```bash
+        # Reload your shell environment
+        source ~/.bashrc
+        
+        # Check ROS2 is available
+        ros2 --version
+        
+        # List available commands
+        ros2 --help
+        
+        # Test with a simple command
+        ros2 topic list
+        ```
+
+        Expected output:
+        ```
+        ros2 cli version: kilted
+        ```
+      </Tab>
+
+      <Tab title="Docker Mode">
+        ```bash
+        # The ros2 command is now available
+        ros2 --version
+        
+        # List topics
+        ros2 topic list
+        
+        # Open an interactive shell
+        ros2
+        # This opens a bash shell inside the container
+        ```
+
+        <Info>
+        The `ros2` wrapper script automatically starts the container if it's not running and forwards commands to it.
+        </Info>
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+## Installation Options
+
+### Choose a ROS2 Distribution
+
+```bash
+ros2-installer --ros-distro humble
+```
+
+Available distributions:
+- `kilted` (default) - Latest stable
+- `jazzy` - Recent stable
+- `iron` - Stable
+- `humble` - Long Term Support (LTS)
+- `rolling` - Development/bleeding edge
+
+<Tip>
+For production systems, use `humble` (LTS). For development and testing, `kilted` or `jazzy` are good choices.
+</Tip>
+
+### Choose a Package Set
+
+```bash
+ros2-installer --package-set base
+```
+
+<CardGroup cols={2}>
+  <Card title="minimal" icon="cube">
+    **Size**: ~500MB  
+    **Install time**: ~5 minutes  
+    **Use case**: Embedded systems, minimal containers
+    
+    Includes:
+    - ros-kilted-ros-core
+    - ros-kilted-ros2cli
+  </Card>
+
+  <Card title="base" icon="cubes">
+    **Size**: ~1GB  
+    **Install time**: ~10 minutes  
+    **Use case**: Headless robots, servers
+    
+    Includes:
+    - Everything in minimal
+    - ros-kilted-ros-base
+    - Demo nodes (C++ & Python)
+  </Card>
+
+  <Card title="desktop" icon="desktop">
+    **Size**: ~2GB  
+    **Install time**: ~15 minutes  
+    **Use case**: Development workstations
+    
+    Includes:
+    - Everything in base
+    - ros-kilted-desktop
+    - rviz2 (visualization)
+    - rqt tools (GUI utilities)
+  </Card>
+
+  <Card title="desktop-full" icon="layer-group">
+    **Size**: ~4GB+  
+    **Install time**: ~25 minutes  
+    **Use case**: Complete development environment
+    
+    Includes:
+    - Everything in desktop
+    - Gazebo (simulation)
+    - Navigation2
+    - MoveIt (motion planning)
+    - SLAM toolbox
+    - Robot localization
+  </Card>
+</CardGroup>
+
+### Combine Options
+
+```bash
+ros2-installer \
+  --ros-distro humble \
+  --package-set desktop \
+  --silent \
+  --log-level INFO
+```
+
+## Common Installation Scenarios
+
+<AccordionGroup>
+  <Accordion title="Development Workstation">
+    Install the full desktop environment for development:
+
+    ```bash
+    ros2-installer --package-set desktop-full --ros-distro humble
+    ```
+
+    This gives you:
+    - All ROS2 packages
+    - Gazebo for simulation
+    - Navigation and motion planning
+    - All development tools
+  </Accordion>
+
+  <Accordion title="CI/CD Pipeline">
+    Automated installation in CI environments:
+
+    ```bash
+    ros2-installer \
+      --silent \
+      --package-set base \
+      --log-level ERROR \
+      --config ci-config.yaml
+    ```
+
+    Create a minimal `ci-config.yaml`:
+    ```yaml
+    installation:
+      ros_distro: "humble"
+      package_set: "base"
+      uninstall_existing: false
+    logging:
+      level: "ERROR"
+      console: true
+    validation:
+      min_disk_space_gb: 2
+      min_memory_gb: 1
+    ```
+  </Accordion>
+
+  <Accordion title="Testing Multiple Distros">
+    Test different ROS2 versions using custom configs:
+
+    ```bash
+    # Test humble
+    ros2-installer --config humble-config.yaml
+    
+    # Test jazzy
+    ros2-installer --config jazzy-config.yaml
+    ```
+
+    Each config can specify different settings:
+    ```yaml humble-config.yaml
+    installation:
+      ros_distro: "humble"
+      package_set: "base"
+    docker:
+      container_name: "ros2-humble-test"
+    ```
+  </Accordion>
+
+  <Accordion title="Embedded/Minimal System">
+    Install only what's needed for running nodes:
+
+    ```bash
+    ros2-installer --package-set minimal --silent
+    ```
+
+    This minimizes:
+    - Disk usage (~500MB)
+    - Installation time (~5 minutes)
+    - Dependencies
+  </Accordion>
+</AccordionGroup>
+
+## First Steps After Installation
+
+### Test Your Installation
+
+<Steps>
+  <Step title="Run demo nodes">
+    Open two terminals:
+
+    **Terminal 1** (Publisher):
+    ```bash
+    source ~/.bashrc  # Ubuntu only
+    ros2 run demo_nodes_cpp talker
+    ```
+
+    **Terminal 2** (Subscriber):
+    ```bash
+    source ~/.bashrc  # Ubuntu only
+    ros2 run demo_nodes_cpp listener
+    ```
+
+    You should see messages being published and received.
+  </Step>
+
+  <Step title="Create a workspace">
+    <Tabs>
+      <Tab title="Ubuntu">
+        ```bash
+        mkdir -p ~/ros2_ws/src
+        cd ~/ros2_ws
+        colcon build
+        source install/setup.bash
+        ```
+      </Tab>
+
+      <Tab title="Docker Mode">
+        ```bash
+        # Your workspace is automatically mounted
+        mkdir -p ~/ros2_ws/src
+        
+        # Work inside the container
+        ros2  # Opens shell
+        cd /root/ros2_ws
+        colcon build
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Create your first package">
+    ```bash
+    cd ~/ros2_ws/src
+    ros2 pkg create --build-type ament_python my_first_package
+    cd ~/ros2_ws
+    colcon build --packages-select my_first_package
+    ```
+  </Step>
+</Steps>
+
+### Useful Commands
+
+<CodeGroup>
+```bash List Topics
+ros2 topic list
+# Shows all active ROS2 topics
+```
+
+```bash Node Information
+ros2 node list
+ros2 node info /node_name
+# List and inspect running nodes
+```
+
+```bash Topic Echo
+ros2 topic echo /topic_name
+# Subscribe and print messages
+```
+
+```bash Service Call
+ros2 service list
+ros2 service call /service_name std_srvs/srv/Empty
+# List and call services
+```
+
+```bash Launch Files
+ros2 launch package_name launch_file.py
+# Run launch files
+```
+
+```bash Build Workspace
+cd ~/ros2_ws
+colcon build
+source install/setup.bash
+# Build and source workspace
+```
+</CodeGroup>
+
+## Advanced Options
+
+### Validation and Dry Run
+
+Before installing, validate your system:
+
+```bash
+# Check system requirements
+ros2-installer --validate-only
+
+# Simulate installation without changes
+ros2-installer --dry-run
+
+# Show what would be installed
+ros2-installer --show-config
+```
+
+### Custom Configuration
+
+Create a custom configuration file:
+
+```yaml my-config.yaml
+installation:
+  ros_distro: "humble"
+  package_set: "desktop"
+  retry_attempts: 5
+  timeout_seconds: 600
+
+logging:
+  level: "DEBUG"
+  file: "/var/log/ros2-install.log"
+
+validation:
+  min_disk_space_gb: 8
+  min_memory_gb: 4
+
+docker:
+  container_name: "my-ros2-env"
+  workspace_dir: "/opt/ros2_workspace"
+```
+
+Use it:
+```bash
+ros2-installer --config my-config.yaml
+```
+
+### Logging and Debugging
+
+Enable detailed logging:
+
+```bash
+ros2-installer --log-level DEBUG
+```
+
+View installation logs:
+```bash
+# Default log location
+tail -f /tmp/ros2_installation.log
+
+# Or check home directory if /tmp is not writable
+ls -la ~/ros2_installation_*.log
+```
+
+## Troubleshooting
+
+### Installation Fails
+
+<AccordionGroup>
+  <Accordion title="Insufficient Disk Space">
+    **Error**: `Insufficient disk space: 3.2GB < 4GB`
+
+    **Solution**:
+    1. Free up disk space
+    2. Or use a smaller package set:
+       ```bash
+       ros2-installer --package-set minimal
+       ```
+    3. Or adjust validation rules in config:
+       ```yaml
+       validation:
+         min_disk_space_gb: 2
+       ```
+  </Accordion>
+
+  <Accordion title="Package Installation Timeout">
+    **Error**: `Command timed out: apt-get install`
+
+    **Solution**: Increase timeout in config:
+    ```yaml
+    installation:
+      timeout_seconds: 1800  # 30 minutes
+      retry_attempts: 5
+    ```
+  </Accordion>
+
+  <Accordion title="Docker Daemon Not Running">
+    **Error**: `Docker daemon did not start within the timeout`
+
+    **Solution**:
+    1. **macOS**: Open Docker Desktop application
+    2. **Linux**: Start Docker service:
+       ```bash
+       sudo systemctl start docker
+       sudo systemctl enable docker
+       ```
+    3. Verify:
+       ```bash
+       docker info
+       ```
+  </Accordion>
+
+  <Accordion title="Permission Denied (Ubuntu)">
+    **Error**: `Script must be run with sudo privileges`
+
+    **Solution**: Always use sudo on Ubuntu:
+    ```bash
+    sudo ros2-installer
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Post-Installation Issues
+
+<AccordionGroup>
+  <Accordion title="ros2 command not found (Ubuntu)">
+    **Solution**: Reload your shell environment:
+    ```bash
+    source ~/.bashrc
+    
+    # Or check if setup script exists
+    ls -la /opt/ros/kilted/setup.bash
+    source /opt/ros/kilted/setup.bash
+    ```
+  </Accordion>
+
+  <Accordion title="ros2 command not found (Docker)">
+    **Solution**: Ensure wrapper script is in PATH:
+    ```bash
+    # Check if script exists
+    ls -la ~/.local/bin/ros2  # macOS
+    ls -la /usr/local/bin/ros2  # Linux
+    
+    # Add to PATH if needed
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+    source ~/.zshrc
+    ```
+  </Accordion>
+
+  <Accordion title="Container not starting (Docker)">
+    **Solution**: Manually start and check container:
+    ```bash
+    # Check container status
+    docker ps -a | grep ros2
+    
+    # Start container
+    docker start ros2-kilted
+    
+    # Check logs
+    docker logs ros2-kilted
+    
+    # Enter container manually
+    docker exec -it ros2-kilted bash
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Uninstallation
+
+### Ubuntu (Native)
+
+```bash
+# Remove ROS2 packages
+sudo apt-get remove ros-kilted-*
+sudo apt-get autoremove
+
+# Remove repository
+sudo rm /etc/apt/sources.list.d/ros2.list
+
+# Remove GPG key
+sudo rm /usr/share/keyrings/ros-archive-keyring.gpg
+
+# Clean up bashrc (manual)
+# Edit ~/.bashrc and remove ROS2 setup lines
+```
+
+### Docker Mode
+
+```bash
+# Stop and remove container
+docker stop ros2-kilted
+docker rm ros2-kilted
+
+# Remove image
+docker rmi ros2-installer/kilted:latest
+
+# Remove wrapper script
+rm ~/.local/bin/ros2  # macOS
+sudo rm /usr/local/bin/ros2  # Linux
+
+# Optional: Remove workspace
+rm -rf ~/ros2_ws
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="ROS2 Documentation" icon="book" href="https://docs.ros.org/">
+    Official ROS2 documentation and tutorials
+  </Card>
+  <Card title="Example Projects" icon="code" href="https://github.com/ros2/examples">
+    ROS2 example packages and demos
+  </Card>
+  <Card title="Community Forum" icon="users" href="https://discourse.ros.org/">
+    Ask questions and get help from the community
+  </Card>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/neelashkannan/ROS2-Installer-CLI">
+    Source code and issue tracker
+  </Card>
+</CardGroup>

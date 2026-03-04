@@ -1,0 +1,636 @@
+---
+title: Configuration
+description: YAML configuration file usage, options, and customization for ROS2 Installer CLI
+---
+
+# Configuration
+
+The ROS2 Installer CLI uses YAML configuration files to customize installation behavior. This allows you to define installation preferences, system settings, validation rules, and more.
+
+## Default Configuration File
+
+By default, the installer looks for `config_cli.yaml` in the current directory. If not found, it automatically creates one with default values.
+
+**Location:** `./config_cli.yaml`
+
+## Using Custom Configuration
+
+Specify a custom configuration file:
+
+```bash
+sudo python3 ros2_installer_cli.py --config /path/to/custom_config.yaml
+```
+
+## Configuration Schema
+
+### Complete Example
+
+Here's the complete default configuration with all available options:
+
+```yaml
+# ROS2 Kilted Kaiju CLI Installer Configuration
+
+# Installation Configuration
+installation:
+  ros_distro: "kilted"
+  package_set: "desktop-full"  # minimal, base, desktop, desktop-full
+  uninstall_existing: true
+  parallel_jobs: 1
+  retry_attempts: 3
+  timeout_seconds: 1200
+
+# System Configuration
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "/tmp/ros2_installation.log"
+  console: true
+
+# Validation Rules
+validation:
+  min_disk_space_gb: 4
+  min_memory_gb: 2
+  required_ubuntu_version: "24.04"
+  supported_architectures: ["amd64", "arm64", "aarch64", "x86_64"]
+
+# Performance Tuning
+performance:
+  parallel_downloads: true
+  download_cache: true
+  compression: true
+
+# Security Configuration
+security:
+  verify_signatures: true
+  check_checksums: true
+  secure_permissions: true
+  audit_logging: true
+
+# Docker Configuration (used on non-Ubuntu systems)
+docker:
+  container_name: "ros2-kilted"
+  workspace_dir: "~/ros2_ws"
+  network_mode: "host"
+```
+
+## Configuration Sections
+
+### Installation Section
+
+Controls core installation behavior:
+
+```yaml
+installation:
+  ros_distro: "kilted"
+  package_set: "desktop-full"
+  uninstall_existing: true
+  parallel_jobs: 1
+  retry_attempts: 3
+  timeout_seconds: 1200
+```
+
+#### `ros_distro`
+
+**Type:** `string`  
+**Default:** `"kilted"`  
+**Options:** `kilted`, `jazzy`, `iron`, `humble`, `rolling`
+
+ROS2 distribution to install.
+
+**Example:**
+```yaml
+ros_distro: "jazzy"
+```
+
+#### `package_set`
+
+**Type:** `string`  
+**Default:** `"desktop-full"`  
+**Options:** `minimal`, `base`, `desktop`, `desktop-full`
+
+Determines which packages are installed:
+
+- **minimal**: `ros-{distro}-ros-core` + `ros-{distro}-ros2cli`
+- **base**: Core + demo nodes (`ros-{distro}-ros-base`, `demo-nodes-cpp`, `demo-nodes-py`)
+- **desktop**: Base + visualization tools (`ros-{distro}-desktop`, `ros-{distro}-rviz2`)
+- **desktop-full**: Everything including:
+  - `ros-{distro}-desktop-full`
+  - `ros-{distro}-gazebo-ros-pkgs`
+  - `ros-{distro}-navigation2`
+  - `ros-{distro}-moveit`
+  - `ros-{distro}-slam-toolbox`
+  - `ros-{distro}-robot-localization`
+
+**Example:**
+```yaml
+package_set: "base"
+```
+
+#### `uninstall_existing`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Removes existing ROS1 and ROS2 installations before installing.
+
+**Example:**
+```yaml
+uninstall_existing: false
+```
+
+#### `parallel_jobs`
+
+**Type:** `integer`  
+**Default:** `1`
+
+Number of parallel jobs for compilation tasks. Note: apt package installation is always sequential.
+
+**Example:**
+```yaml
+parallel_jobs: 4
+```
+
+#### `retry_attempts`
+
+**Type:** `integer`  
+**Default:** `3`
+
+Number of times to retry failed operations.
+
+**Example:**
+```yaml
+retry_attempts: 5
+```
+
+#### `timeout_seconds`
+
+**Type:** `integer`  
+**Default:** `1200` (20 minutes)
+
+Timeout for installation commands in seconds.
+
+**Example:**
+```yaml
+timeout_seconds: 1800  # 30 minutes
+```
+
+### System Section
+
+Controls system-level operations:
+
+```yaml
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+```
+
+#### `update_system`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Runs `apt-get update` before installation.
+
+#### `install_dependencies`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Installs essential dependencies:
+- `software-properties-common`
+- `curl`, `wget`, `gnupg2`
+- `lsb-release`
+- `apt-transport-https`
+- `ca-certificates`
+
+#### `backup_configs`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Creates backups of modified configuration files (e.g., `~/.bashrc.backup.<session-id>`).
+
+#### `verify_compatibility`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Validates system compatibility before installation.
+
+### Logging Section
+
+Controls logging behavior:
+
+```yaml
+logging:
+  level: "INFO"
+  file: "/tmp/ros2_installation.log"
+  console: true
+```
+
+#### `level`
+
+**Type:** `string`  
+**Default:** `"INFO"`  
+**Options:** `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+
+Sets logging verbosity level.
+
+**Example:**
+```yaml
+level: "DEBUG"  # Most verbose
+```
+
+#### `file`
+
+**Type:** `string`  
+**Default:** `"/tmp/ros2_installation.log"`
+
+Path to log file. Falls back to `~/ros2_installation_<session-id>.log` if permission denied.
+
+**Example:**
+```yaml
+file: "~/logs/ros2_install.log"
+```
+
+#### `console`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Enables console output in addition to file logging.
+
+**Example:**
+```yaml
+console: false  # File logging only
+```
+
+### Validation Section
+
+Defines system requirements:
+
+```yaml
+validation:
+  min_disk_space_gb: 4
+  min_memory_gb: 2
+  required_ubuntu_version: "24.04"
+  supported_architectures: ["amd64", "arm64", "aarch64", "x86_64"]
+```
+
+#### `min_disk_space_gb`
+
+**Type:** `integer`  
+**Default:** `4`
+
+Minimum free disk space in gigabytes.
+
+#### `min_memory_gb`
+
+**Type:** `integer`  
+**Default:** `2`
+
+Minimum system memory in gigabytes.
+
+#### `required_ubuntu_version`
+
+**Type:** `string`  
+**Default:** `"24.04"`
+
+Recommended Ubuntu version (warning shown if mismatch).
+
+#### `supported_architectures`
+
+**Type:** `array[string]`  
+**Default:** `["amd64", "arm64", "aarch64", "x86_64"]`
+
+List of supported CPU architectures.
+
+### Performance Section
+
+Optimization settings:
+
+```yaml
+performance:
+  parallel_downloads: true
+  download_cache: true
+  compression: true
+```
+
+#### `parallel_downloads`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Enables parallel package downloads where supported.
+
+#### `download_cache`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Uses apt download cache to speed up repeated installations.
+
+#### `compression`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Enables compression for cached downloads.
+
+### Security Section
+
+Security-related settings:
+
+```yaml
+security:
+  verify_signatures: true
+  check_checksums: true
+  secure_permissions: true
+  audit_logging: true
+```
+
+#### `verify_signatures`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Verifies GPG signatures of downloaded packages.
+
+#### `check_checksums`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Verifies checksums of downloaded files.
+
+#### `secure_permissions`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Sets secure file permissions on installed files.
+
+#### `audit_logging`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Enables detailed audit logging of all operations.
+
+### Docker Section
+
+Docker mode settings (used on non-Ubuntu systems):
+
+```yaml
+docker:
+  container_name: "ros2-kilted"
+  workspace_dir: "~/ros2_ws"
+  network_mode: "host"
+```
+
+#### `container_name`
+
+**Type:** `string`  
+**Default:** `"ros2-kilted"`
+
+Name of the Docker container to create.
+
+**Example:**
+```yaml
+container_name: "my-ros2-dev"
+```
+
+#### `workspace_dir`
+
+**Type:** `string`  
+**Default:** `"~/ros2_ws"`
+
+Host directory mounted as ROS2 workspace inside container.
+
+**Example:**
+```yaml
+workspace_dir: "~/Projects/robotics"
+```
+
+#### `network_mode`
+
+**Type:** `string`  
+**Default:** `"host"`
+
+Docker network mode. `host` allows easy ROS2 communication.
+
+**Example:**
+```yaml
+network_mode: "bridge"
+```
+
+## Configuration Examples
+
+### Minimal Installation
+
+```yaml
+installation:
+  ros_distro: "kilted"
+  package_set: "minimal"
+  uninstall_existing: false
+  timeout_seconds: 600
+
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: false
+
+logging:
+  level: "WARNING"
+  console: true
+
+validation:
+  min_disk_space_gb: 2
+  min_memory_gb: 1
+```
+
+### Development Environment
+
+```yaml
+installation:
+  ros_distro: "jazzy"
+  package_set: "desktop-full"
+  uninstall_existing: true
+  parallel_jobs: 8
+  retry_attempts: 5
+  timeout_seconds: 1800
+
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+
+logging:
+  level: "DEBUG"
+  file: "~/ros2_dev_install.log"
+  console: true
+
+validation:
+  min_disk_space_gb: 10
+  min_memory_gb: 4
+```
+
+### Production Server
+
+```yaml
+installation:
+  ros_distro: "humble"
+  package_set: "base"
+  uninstall_existing: true
+  parallel_jobs: 4
+  retry_attempts: 3
+  timeout_seconds: 1200
+
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+
+logging:
+  level: "INFO"
+  file: "/var/log/ros2_installation.log"
+  console: false
+
+security:
+  verify_signatures: true
+  check_checksums: true
+  secure_permissions: true
+  audit_logging: true
+
+validation:
+  min_disk_space_gb: 20
+  min_memory_gb: 8
+```
+
+### Docker Mode (macOS/Windows)
+
+```yaml
+installation:
+  ros_distro: "kilted"
+  package_set: "desktop-full"
+
+docker:
+  container_name: "ros2-dev"
+  workspace_dir: "~/Documents/ros2_workspace"
+  network_mode: "host"
+
+logging:
+  level: "INFO"
+  file: "~/ros2_docker_install.log"
+  console: true
+```
+
+### CI/CD Pipeline
+
+```yaml
+installation:
+  ros_distro: "jazzy"
+  package_set: "base"
+  uninstall_existing: true
+  parallel_jobs: 2
+  retry_attempts: 2
+  timeout_seconds: 900
+
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: false
+  verify_compatibility: false
+
+logging:
+  level: "ERROR"
+  file: "/tmp/ci_ros2_install.log"
+  console: true
+
+validation:
+  min_disk_space_gb: 5
+  min_memory_gb: 2
+```
+
+## Command-Line Override Priority
+
+Command-line flags override configuration file settings:
+
+```bash
+# Configuration has ros_distro: "kilted"
+# Command-line overrides to jazzy:
+sudo python3 ros2_installer_cli.py --config config.yaml --ros-distro jazzy
+```
+
+**Override precedence (highest to lowest):**
+1. Command-line flags
+2. Configuration file
+3. Default values
+
+## Viewing Current Configuration
+
+Display the active configuration:
+
+```bash
+sudo python3 ros2_installer_cli.py --show-config
+```
+
+This shows the merged configuration including defaults and overrides.
+
+## Configuration Validation
+
+The installer automatically validates your configuration:
+
+- Required sections must be present (`installation`, `logging`)
+- ROS distro must be valid
+- Values must be correct types (boolean, integer, string, array)
+- File paths must be accessible (with appropriate warnings)
+
+Invalid configurations will produce clear error messages:
+
+```
+ConfigurationError: Invalid ROS distro: foxy
+```
+
+## Configuration File Location
+
+The installer searches for configuration files in this order:
+
+1. Path specified with `--config` flag
+2. `./config_cli.yaml` (current directory)
+3. Auto-generated default if none found
+
+## Best Practices
+
+1. **Version Control**: Keep configuration files in version control
+2. **Environment-Specific**: Create separate configs for dev/staging/prod
+3. **Documentation**: Comment your configuration changes
+4. **Validation**: Test with `--validate-only` before full installation
+5. **Backups**: Always enable `backup_configs: true` for safety
+6. **Logging**: Use appropriate log levels for your environment
+7. **Security**: Keep security settings enabled in production
+
+## Troubleshooting Configuration
+
+If you encounter configuration issues:
+
+1. **Validate syntax**: Check YAML formatting with a validator
+2. **Check permissions**: Ensure the configuration file is readable
+3. **Review logs**: Check log file for detailed error messages
+4. **Use defaults**: Start with default configuration and modify incrementally
+5. **Show config**: Use `--show-config` to see active settings
+
+## Next Steps
+
+- See [Interactive Mode](/usage/interactive-mode) for guided installations
+- See [Silent Mode](/usage/silent-mode) for automated deployments

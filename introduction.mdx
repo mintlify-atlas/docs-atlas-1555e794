@@ -1,0 +1,187 @@
+---
+title: "Introduction"
+description: "A powerful command-line tool for installing ROS2 on any operating system - native on Ubuntu, Docker-based everywhere else"
+---
+
+## What is ROS2 Installer CLI?
+
+ROS2 Installer CLI is a production-grade command-line tool that simplifies the installation of ROS2 (Robot Operating System 2) across different operating systems. Whether you're running Ubuntu, macOS, or any other Linux distribution, this tool handles the complexity of ROS2 installation automatically.
+
+<CardGroup cols={2}>
+  <Card title="Native Ubuntu" icon="ubuntu">
+    Installs ROS2 directly via apt package manager with full system integration
+  </Card>
+  <Card title="Docker Mode" icon="docker">
+    Automatic Docker-based installation for macOS and non-Ubuntu Linux systems
+  </Card>
+  <Card title="Multiple Distros" icon="code-branch">
+    Supports kilted, jazzy, iron, humble, and rolling distributions
+  </Card>
+  <Card title="Smart Detection" icon="brain">
+    Automatically detects your system and chooses the optimal installation method
+  </Card>
+</CardGroup>
+
+## Key Benefits
+
+### Universal Compatibility
+
+The installer intelligently detects your operating system and adapts:
+
+- **Ubuntu 24.04**: Native installation with full performance and hardware access
+- **macOS**: Docker-based installation with Homebrew integration
+- **Debian/Fedora/Arch**: Docker-based installation with automatic Docker setup
+- **Other Linux**: Docker-based installation as fallback
+
+### Production-Grade Features
+
+<AccordionGroup>
+  <Accordion title="Automatic System Validation">
+    Before installation, the tool validates:
+    - Disk space (minimum 4GB free)
+    - Available memory (minimum 2GB)
+    - System architecture (amd64, arm64, aarch64, x86_64)
+    - Operating system compatibility
+  </Accordion>
+
+  <Accordion title="Rollback on Failure">
+    If installation fails, the tool automatically:
+    - Removes newly installed packages
+    - Restores backed-up configuration files
+    - Cleans up repositories and dependencies
+    - Provides detailed error logs for debugging
+  </Accordion>
+
+  <Accordion title="Comprehensive Logging">
+    Session-based logging with:
+    - Unique session IDs for tracking
+    - File and console output
+    - Configurable log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    - Performance metrics and timing data
+  </Accordion>
+
+  <Accordion title="Retry Logic & Error Handling">
+    Resilient installation with:
+    - Configurable retry attempts (default: 3)
+    - Exponential backoff between retries
+    - Automatic cleanup of stale processes
+    - Timeout protection (default: 300 seconds)
+  </Accordion>
+</AccordionGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="System Detection">
+    The installer analyzes your operating system, available resources, and determines the optimal installation strategy.
+  </Step>
+  
+  <Step title="Validation">
+    Checks system requirements including disk space, memory, architecture, and permissions.
+  </Step>
+  
+  <Step title="Installation Strategy">
+    - **Ubuntu**: Sets up ROS2 repositories, installs packages via apt, configures environment in ~/.bashrc
+    - **Other OS**: Installs Docker (if needed), builds ROS2 container, creates wrapper script
+  </Step>
+  
+  <Step title="Verification">
+    Tests the installation by running ROS2 commands and verifying package installations.
+  </Step>
+</Steps>
+
+## Package Sets
+
+Choose the right package set for your needs:
+
+| Package Set | Size | Description | Includes |
+|-------------|------|-------------|----------|
+| `minimal` | ~500MB | Core ROS2 functionality | ros-core, ros2cli |
+| `base` | ~1GB | Standard ROS2 packages | ros-base, demo nodes (C++ & Python) |
+| `desktop` | ~2GB | GUI tools and visualization | rviz2, rqt tools, desktop packages |
+| `desktop-full` | ~4GB+ | Complete ROS2 ecosystem | Gazebo, Navigation2, MoveIt, SLAM toolbox, robot localization |
+
+<Tip>
+For development work, we recommend `desktop-full` to have all tools available. For production robots or containers, use `base` or `minimal`.
+</Tip>
+
+## Supported ROS2 Distributions
+
+The installer supports all major ROS2 distributions:
+
+- **kilted** (ROS2 Kilted Kaiju) - Latest
+- **jazzy** (ROS2 Jazzy Jalisco)
+- **iron** (ROS2 Iron Irwini)
+- **humble** (ROS2 Humble Hawksbill) - LTS
+- **rolling** (ROS2 Rolling Ridley) - Development
+
+<Info>
+The default distribution is `kilted`. Use the `--ros-distro` flag to specify a different version.
+</Info>
+
+## Architecture
+
+The installer is built with enterprise-grade patterns:
+
+```python
+# Key components from ros2_installer_cli.py
+
+@dataclass
+class SystemInfo:
+    """Comprehensive system information gathering"""
+    os_name: str
+    os_version: str
+    architecture: str
+    memory_gb: float
+    disk_space_gb: float
+    cpu_cores: int
+    is_ubuntu: bool = False
+    is_macos: bool = False
+    linux_distro: str = ""
+
+@dataclass
+class InstallationResult:
+    """Detailed installation results"""
+    success: bool
+    duration: float
+    packages_installed: int
+    errors: List[str]
+    warnings: List[str]
+    session_id: str
+```
+
+## When to Use Docker Mode
+
+Docker mode is automatically enabled when:
+
+- Running on macOS
+- Running on non-Ubuntu Linux distributions (Debian, Fedora, Arch, etc.)
+- Ubuntu version doesn't match requirements
+
+**Benefits of Docker Mode:**
+- No system-wide changes required
+- Isolated ROS2 environment
+- Easy to remove or upgrade
+- Consistent behavior across systems
+
+**Docker Mode Features:**
+- Automatic Docker installation (if not present)
+- Custom ROS2 container with development tools
+- Host workspace mounting (`~/ros2_ws` → `/root/ros2_ws`)
+- Transparent `ros2` command wrapper
+- Network host mode for ROS2 communication
+
+<Warning>
+Docker mode requires Docker to be installed and running. On macOS, this requires Docker Desktop. The installer can install Docker automatically on supported Linux distributions.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install the ROS2 Installer CLI tool
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get started with your first ROS2 installation
+  </Card>
+</CardGroup>

@@ -1,0 +1,192 @@
+---
+title: Interactive Mode
+description: How to use the ROS2 Installer CLI in interactive mode with user prompts and confirmations
+---
+
+# Interactive Mode
+
+Interactive mode is the default mode of operation for the ROS2 Installer CLI. It provides a guided installation experience with prompts and confirmations to ensure you understand what changes will be made to your system.
+
+## Starting Interactive Installation
+
+To start an interactive installation, simply run the installer without the `--silent` flag:
+
+```bash
+sudo python3 ros2_installer_cli.py
+```
+
+## User Flow
+
+### 1. System Validation
+
+The installer first validates your system requirements:
+
+- Checks disk space (minimum 4GB by default)
+- Verifies available memory (minimum 2GB by default)
+- Validates CPU architecture (amd64, arm64, aarch64, x86_64)
+- Detects operating system (Ubuntu for native install, or Docker mode for others)
+- Verifies sudo privileges for native Ubuntu installations
+
+```
+🔍 Validating system requirements...
+✅ System validation passed
+```
+
+### 2. Installation Summary
+
+Before proceeding, the installer displays a comprehensive summary of what will be installed:
+
+```
+============================================================
+🤖 ROS2 Installation Summary
+============================================================
+  • ROS Distribution: kilted
+  • Package Set: desktop-full
+  • Install Mode: Native Ubuntu
+  • Uninstall Existing: True
+  • Parallel Jobs: 1
+
+📊 System Information:
+  • OS: Linux 6.8.0-49-generic
+  • Linux Distro: ubuntu
+  • Architecture: x86_64
+  • Memory: 15.5 GB
+  • Disk Space: 50.2 GB
+  • CPU Cores: 8
+  • Install Mode: Native (Ubuntu)
+```
+
+### 3. System Modifications Warning
+
+The installer clearly lists all modifications that will be made:
+
+**For Native Ubuntu Installation:**
+```
+⚠️  This will modify your system by:
+   - Installing ROS2 packages and dependencies
+   - Adding ROS2 repositories
+   - Modifying ~/.bashrc for environment setup
+   - Removing existing ROS installations
+```
+
+**For Docker Mode (non-Ubuntu systems):**
+```
+⚠️  This will modify your system by:
+   - Installing Docker (if not present)
+   - Building a Docker image with ROS2
+   - Creating a ROS2 Docker container
+   - Installing a 'ros2' wrapper command
+```
+
+### 4. User Confirmation Prompt
+
+The installer pauses and asks for explicit confirmation:
+
+```
+============================================================
+🚀 Proceed with installation? [y/N]:
+```
+
+**Response Options:**
+- `y` or `yes` - Proceeds with installation
+- `N` or any other input - Cancels installation
+- `Ctrl+C` - Cancels installation immediately
+
+The prompt defaults to "No" for safety, requiring you to explicitly type `y` or `yes` to proceed.
+
+### 5. Installation Progress
+
+Once confirmed, the installer provides real-time feedback:
+
+```
+🔄 Updating system packages...
+✅ Updating package index (took 2.35s)
+📁 Setting up ROS2 repositories...
+✅ Adding ROS2 GPG key (took 1.20s)
+📦 Installing ROS2 kilted desktop-full packages...
+✅ Installing desktop-full packages (took 245.80s)
+🛠️ Setting up development tools...
+🌍 Configuring environment...
+✅ Verifying installation...
+```
+
+### 6. Installation Complete
+
+Upon successful completion:
+
+```
+🎉 Installation completed successfully in 312.45 seconds
+📊 Summary: 87 packages installed in 312.45 seconds
+🆔 Session ID: a3f9b2c1
+
+🚀 You can now use ROS2 commands in a new terminal session!
+   Try: source ~/.bashrc && ros2 topic list
+```
+
+## Interactive Mode Features
+
+### Real-Time Logging
+
+All installation steps are logged to both:
+- Console output (with timestamps and status indicators)
+- Log file at `/tmp/ros2_installation.log` (or `~/ros2_installation_<session-id>.log` if permission denied)
+
+### Error Handling
+
+If errors occur during installation:
+- Clear error messages are displayed
+- Automatic rollback is initiated to restore previous state
+- Detailed error information is logged
+
+```
+❌ Installation failed!
+   • Command failed: sudo apt-get install -y ros-kilted-desktop-full
+🔄 Rolling back installation...
+```
+
+### Keyboard Interrupt
+
+You can cancel the installation at any time by pressing `Ctrl+C`:
+
+```
+❌ Installation cancelled by user
+```
+
+## Customizing Interactive Installation
+
+You can still override configuration options while remaining in interactive mode:
+
+```bash
+# Change package set interactively
+sudo python3 ros2_installer_cli.py --package-set base
+
+# Change ROS distribution interactively
+sudo python3 ros2_installer_cli.py --ros-distro jazzy
+
+# Use custom configuration file
+sudo python3 ros2_installer_cli.py --config my_config.yaml
+
+# Adjust logging verbosity
+sudo python3 ros2_installer_cli.py --log-level DEBUG
+```
+
+## Benefits of Interactive Mode
+
+1. **Safety**: Review all changes before they are made
+2. **Transparency**: See exactly what the installer will modify
+3. **Control**: Cancel at any time if something looks incorrect
+4. **Feedback**: Real-time progress updates keep you informed
+5. **Learning**: Understand what components are being installed
+
+## When to Use Interactive Mode
+
+- First-time installations
+- Development environments
+- Learning about ROS2 installation process
+- When you want to review changes before applying them
+- Testing configurations on new systems
+
+## Next Steps
+
+- For automated installations, see [Silent Mode](/usage/silent-mode)
+- To customize installation options, see [Configuration](/usage/configuration)

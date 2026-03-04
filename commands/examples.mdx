@@ -1,0 +1,523 @@
+---
+title: Usage Examples
+description: Real-world usage examples for common ROS2 installation scenarios
+---
+
+This page provides practical examples for using the ROS2 Installer CLI in various scenarios.
+
+## Basic Installation
+
+### Default Installation
+
+Install ROS2 Kilted Kaiju with the desktop-full package set:
+
+```bash
+sudo python3 ros2_installer_cli.py
+```
+
+This will:
+- Detect your operating system
+- Validate system requirements
+- Prompt for confirmation
+- Install ROS2 with all packages
+- Configure your environment
+
+### Silent Installation
+
+Install without user prompts (useful for automation):
+
+```bash
+sudo python3 ros2_installer_cli.py --silent
+```
+
+<Warning>
+  Silent mode skips all confirmation prompts. Ensure you've validated the system first.
+</Warning>
+
+## Distribution Selection
+
+### Install Specific Distribution
+
+Install ROS2 Humble (LTS version):
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro humble
+```
+
+### Install Rolling Release
+
+For development with the latest features:
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro rolling
+```
+
+### Install Jazzy
+
+For the latest stable release:
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro jazzy
+```
+
+## Package Set Selection
+
+### Minimal Installation
+
+Install only ROS2 core and CLI tools:
+
+```bash
+sudo python3 ros2_installer_cli.py --package-set minimal
+```
+
+**Use cases:**
+- Headless servers
+- Embedded systems
+- CI/CD environments
+- Minimal Docker images
+
+### Base Installation
+
+Core packages plus basic demos:
+
+```bash
+sudo python3 ros2_installer_cli.py --package-set base
+```
+
+**Use cases:**
+- Robot controllers
+- Edge computing devices
+- Learning ROS2 basics
+
+### Desktop Installation
+
+GUI tools without simulators:
+
+```bash
+sudo python3 ros2_installer_cli.py --package-set desktop
+```
+
+**Use cases:**
+- Development workstations
+- Visualization and monitoring
+- RViz2 and rqt tools
+
+### Desktop-Full Installation
+
+Complete installation with simulators:
+
+```bash
+sudo python3 ros2_installer_cli.py --package-set desktop-full
+```
+
+**Includes:**
+- All desktop packages
+- Gazebo simulator
+- Navigation2
+- MoveIt motion planning
+- SLAM Toolbox
+- Robot localization
+
+## System Validation
+
+### Pre-Installation Check
+
+Validate system before installing:
+
+```bash
+python3 ros2_installer_cli.py --validate-only
+```
+
+**Checks performed:**
+- Available disk space (minimum 4GB)
+- System memory (minimum 2GB)
+- Architecture compatibility
+- OS version compatibility
+- Sudo privileges (Ubuntu only)
+
+### Example Output
+
+```
+📊 System Information:
+  • OS: Linux 6.8.0
+  • Linux Distro: ubuntu
+  • Architecture: x86_64
+  • Memory: 16.0 GB
+  • Disk Space: 250.5 GB
+  • CPU Cores: 8
+  • Install Mode: Native (Ubuntu)
+🔍 Validating system requirements...
+✅ System validation passed
+```
+
+### Dry Run
+
+Simulate installation without making changes:
+
+```bash
+python3 ros2_installer_cli.py --dry-run
+```
+
+This will:
+- Display system information
+- Show what would be installed
+- Exit without modifying the system
+
+## Custom Configuration
+
+### Using Custom Config File
+
+Create a custom configuration file and use it:
+
+```bash
+sudo python3 ros2_installer_cli.py --config my_config.yaml
+```
+
+### Example Custom Config
+
+```yaml my_config.yaml
+installation:
+  ros_distro: humble
+  package_set: base
+  uninstall_existing: false
+  parallel_jobs: 8
+  retry_attempts: 5
+  timeout_seconds: 600
+
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+
+logging:
+  level: DEBUG
+  file: /var/log/ros2_install.log
+  console: true
+
+validation:
+  min_disk_space_gb: 10
+  min_memory_gb: 4
+  required_ubuntu_version: '24.04'
+  supported_architectures: ['x86_64', 'aarch64']
+```
+
+### View Current Configuration
+
+```bash
+python3 ros2_installer_cli.py --show-config
+```
+
+## Logging and Debugging
+
+### Verbose Logging
+
+Enable debug logging for troubleshooting:
+
+```bash
+sudo python3 ros2_installer_cli.py --log-level DEBUG
+```
+
+### Quiet Logging
+
+Show only errors:
+
+```bash
+sudo python3 ros2_installer_cli.py --log-level ERROR --silent
+```
+
+### Custom Log File
+
+Specify log file in configuration:
+
+```yaml
+logging:
+  level: INFO
+  file: /home/user/ros2_install.log
+  console: true
+```
+
+## Advanced Scenarios
+
+### CI/CD Pipeline
+
+Validate and install in automation:
+
+```bash
+#!/bin/bash
+set -e
+
+# Validate system
+echo "Validating system requirements..."
+python3 ros2_installer_cli.py --validate-only
+
+if [ $? -eq 0 ]; then
+    echo "Validation passed, proceeding with installation..."
+    sudo python3 ros2_installer_cli.py \
+        --package-set minimal \
+        --silent \
+        --log-level WARNING
+else
+    echo "Validation failed, aborting."
+    exit 1
+fi
+```
+
+### Multi-Machine Deployment
+
+Deploy with consistent configuration:
+
+```bash
+# On each machine
+sudo python3 ros2_installer_cli.py \
+    --config production.yaml \
+    --silent \
+    --log-level INFO
+```
+
+### Docker-Based Installation (Non-Ubuntu)
+
+On macOS or other systems:
+
+```bash
+# No sudo required
+python3 ros2_installer_cli.py --ros-distro jazzy
+```
+
+The installer will:
+1. Detect non-Ubuntu system
+2. Install Docker (if needed)
+3. Build ROS2 Docker image
+4. Create persistent container
+5. Install `ros2` wrapper command
+
+After installation, use ROS2:
+
+```bash
+# Open interactive shell
+ros2
+
+# Run ROS2 commands
+ros2 topic list
+ros2 node list
+```
+
+### Parallel Jobs Configuration
+
+Optimize installation speed:
+
+```bash
+# Use 8 parallel jobs on powerful machine
+sudo python3 ros2_installer_cli.py --parallel-jobs 8
+
+# Use 2 parallel jobs on resource-constrained system
+sudo python3 ros2_installer_cli.py --parallel-jobs 2
+```
+
+## Testing and Development
+
+### Test Different Configurations
+
+```bash
+# Test minimal setup
+python3 ros2_installer_cli.py \
+    --package-set minimal \
+    --dry-run
+
+# Test full setup
+python3 ros2_installer_cli.py \
+    --package-set desktop-full \
+    --dry-run
+```
+
+### Development Workflow
+
+```bash
+# Install rolling with full debugging
+sudo python3 ros2_installer_cli.py \
+    --ros-distro rolling \
+    --package-set desktop-full \
+    --log-level DEBUG \
+    --parallel-jobs 8
+```
+
+### Validate Custom Configuration
+
+```bash
+# Show resolved configuration
+python3 ros2_installer_cli.py \
+    --config test.yaml \
+    --show-config
+
+# Validate with custom config
+python3 ros2_installer_cli.py \
+    --config test.yaml \
+    --validate-only
+```
+
+## Error Handling
+
+### Check Installation Logs
+
+If installation fails, check the log file:
+
+```bash
+tail -f /tmp/ros2_installation.log
+```
+
+Or in your home directory:
+
+```bash
+tail -f ~/ros2_installation_*.log
+```
+
+### Retry After Failure
+
+The installer has built-in retry logic, but you can manually retry:
+
+```bash
+# First attempt
+sudo python3 ros2_installer_cli.py
+
+# If network issues occurred, retry
+sudo python3 ros2_installer_cli.py --silent
+```
+
+### Rollback on Failure
+
+The installer automatically rolls back changes on failure. Check logs for details:
+
+```bash
+# View rollback actions
+grep "rollback" /tmp/ros2_installation.log
+```
+
+## Post-Installation
+
+### Verify Installation
+
+After installation completes:
+
+#### Native Ubuntu
+
+```bash
+# Source ROS2 environment
+source ~/.bashrc
+
+# Test ROS2
+ros2 --help
+ros2 topic list
+```
+
+#### Docker-Based
+
+```bash
+# Open new terminal and test
+ros2 --help
+ros2 topic list
+```
+
+### Check Installed Packages
+
+```bash
+# List ROS2 packages
+dpkg -l | grep ros-kilted
+
+# Check ROS2 version
+ros2 --version
+```
+
+## Troubleshooting Examples
+
+### Permission Denied
+
+```bash
+# Ubuntu installation requires sudo
+sudo python3 ros2_installer_cli.py
+```
+
+### Insufficient Disk Space
+
+```bash
+# Check available space
+df -h
+
+# Install minimal set if space is limited
+sudo python3 ros2_installer_cli.py --package-set minimal
+```
+
+### Network Timeout
+
+```bash
+# Increase timeout in config
+installation:
+  timeout_seconds: 600
+  retry_attempts: 5
+```
+
+### Docker Not Running
+
+On macOS/non-Ubuntu systems:
+
+```bash
+# Start Docker Desktop manually
+open -a Docker
+
+# Wait for Docker to start, then retry
+python3 ros2_installer_cli.py
+```
+
+## Complete Examples
+
+<AccordionGroup>
+  <Accordion title="Robot Development Setup">
+    Install ROS2 Humble with full desktop for robot development:
+    
+    ```bash
+    sudo python3 ros2_installer_cli.py \
+        --ros-distro humble \
+        --package-set desktop-full \
+        --parallel-jobs 8 \
+        --log-level INFO
+    ```
+  </Accordion>
+  
+  <Accordion title="CI/CD Minimal Install">
+    Automated minimal installation for testing:
+    
+    ```bash
+    python3 ros2_installer_cli.py --validate-only && \
+    sudo python3 ros2_installer_cli.py \
+        --package-set minimal \
+        --silent \
+        --log-level ERROR
+    ```
+  </Accordion>
+  
+  <Accordion title="Production Server">
+    Install with custom configuration on production server:
+    
+    ```bash
+    sudo python3 ros2_installer_cli.py \
+        --config /etc/ros2/production.yaml \
+        --package-set base \
+        --silent \
+        --log-level WARNING
+    ```
+  </Accordion>
+  
+  <Accordion title="macOS Development">
+    Docker-based installation on macOS:
+    
+    ```bash
+    # Install Docker Desktop first if needed
+    # Then run installer (no sudo required)
+    python3 ros2_installer_cli.py \
+        --ros-distro jazzy \
+        --package-set desktop-full
+    
+    # After installation, use ROS2
+    ros2 topic list
+    ```
+  </Accordion>
+</AccordionGroup>

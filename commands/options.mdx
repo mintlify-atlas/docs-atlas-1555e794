@@ -1,0 +1,240 @@
+---
+title: Command-Line Options
+description: Complete reference of all CLI flags and options
+---
+
+This page documents all command-line options available in the ROS2 Installer CLI.
+
+## General Options
+
+<ParamField path="--version" type="flag">
+  Display the installer version and exit.
+  
+  ```bash
+  python3 ros2_installer_cli.py --version
+  # Output: ROS2 CLI Installer v2.1.0
+  ```
+</ParamField>
+
+<ParamField path="--config" type="string" default="config_cli.yaml">
+  Path to a custom configuration file.
+  
+  Short form: `-c`
+  
+  ```bash
+  sudo python3 ros2_installer_cli.py --config /path/to/custom_config.yaml
+  ```
+  
+  The configuration file must be in YAML format and contain required sections (`installation`, `logging`).
+</ParamField>
+
+## Installation Options
+
+<ParamField path="--ros-distro" type="enum" default="kilted">
+  ROS2 distribution to install. Overrides the configuration file setting.
+  
+  Short form: `-d`
+  
+  **Valid choices:**
+  - `kilted` - ROS2 Kilted Kaiju (latest)
+  - `jazzy` - ROS2 Jazzy Jalisco
+  - `iron` - ROS2 Iron Irwini
+  - `humble` - ROS2 Humble Hawksbill (LTS)
+  - `rolling` - ROS2 Rolling Ridley (development)
+  
+  ```bash
+  sudo python3 ros2_installer_cli.py --ros-distro humble
+  ```
+</ParamField>
+
+<ParamField path="--package-set" type="enum" default="desktop-full">
+  Package set to install. Overrides the configuration file setting.
+  
+  Short form: `-p`
+  
+  **Valid choices:**
+  - `minimal` - ROS core and CLI tools only
+  - `base` - Core + basic demos and examples
+  - `desktop` - Base + GUI tools (RViz2, rqt)
+  - `desktop-full` - Desktop + simulators and additional packages
+  
+  ```bash
+  sudo python3 ros2_installer_cli.py --package-set base
+  ```
+  
+  <Info>
+    The `desktop-full` package set includes Gazebo, Navigation2, MoveIt, SLAM Toolbox, and other commonly used packages.
+  </Info>
+</ParamField>
+
+<ParamField path="--parallel-jobs" type="integer" default="4">
+  Number of parallel jobs for installation operations.
+  
+  Short form: `-j`
+  
+  ```bash
+  sudo python3 ros2_installer_cli.py --parallel-jobs 8
+  ```
+  
+  <Note>
+    This affects parallel processing during installation. On systems with more CPU cores, increasing this value may speed up the installation.
+  </Note>
+</ParamField>
+
+## Execution Modes
+
+<ParamField path="--silent" type="flag">
+  Silent installation mode. Skips all user confirmation prompts.
+  
+  Short form: `-s`
+  
+  ```bash
+  sudo python3 ros2_installer_cli.py --silent
+  ```
+  
+  <Warning>
+    Use with caution in production environments. The installer will proceed with installation without asking for confirmation.
+  </Warning>
+</ParamField>
+
+<ParamField path="--validate-only" type="flag">
+  Validate system requirements without performing installation.
+  
+  ```bash
+  python3 ros2_installer_cli.py --validate-only
+  ```
+  
+  This will:
+  - Display system information
+  - Check disk space and memory requirements
+  - Verify architecture compatibility
+  - Check for required permissions (on Ubuntu)
+  - Exit with code 0 if validation passes, 1 if it fails
+</ParamField>
+
+<ParamField path="--dry-run" type="flag">
+  Simulate installation without making any changes to the system.
+  
+  ```bash
+  python3 ros2_installer_cli.py --dry-run
+  ```
+  
+  Performs validation and displays what would be installed, but doesn't:
+  - Install packages
+  - Modify configuration files
+  - Add repositories
+  - Create Docker containers
+</ParamField>
+
+<ParamField path="--show-config" type="flag">
+  Display the current configuration and exit.
+  
+  ```bash
+  python3 ros2_installer_cli.py --show-config
+  ```
+  
+  Prints the entire configuration in YAML format, including:
+  - Installation settings
+  - System configuration
+  - Logging setup
+  - Validation requirements
+  - Performance and security settings
+</ParamField>
+
+## Logging Options
+
+<ParamField path="--log-level" type="enum" default="INFO">
+  Set the logging verbosity level. Overrides the configuration file setting.
+  
+  Short form: `-l`
+  
+  **Valid choices:**
+  - `DEBUG` - Detailed diagnostic information
+  - `INFO` - General informational messages
+  - `WARNING` - Warning messages only
+  - `ERROR` - Error messages only
+  - `CRITICAL` - Critical errors only
+  
+  ```bash
+  sudo python3 ros2_installer_cli.py --log-level DEBUG
+  ```
+  
+  <Tip>
+    Use `DEBUG` level when troubleshooting installation issues.
+  </Tip>
+</ParamField>
+
+## Option Combinations
+
+### Common Combinations
+
+Options can be combined for powerful workflows:
+
+```bash
+# Validate before installing
+python3 ros2_installer_cli.py --validate-only
+sudo python3 ros2_installer_cli.py --silent
+
+# Test with custom config
+python3 ros2_installer_cli.py --config test.yaml --dry-run
+
+# Minimal install with detailed logging
+sudo python3 ros2_installer_cli.py --package-set minimal --log-level DEBUG
+
+# Silent install with specific distro
+sudo python3 ros2_installer_cli.py --ros-distro humble --silent
+```
+
+### Option Precedence
+
+When the same setting is specified in multiple places:
+
+1. **Command-line options** (highest priority)
+2. **Configuration file** specified with `--config`
+3. **Default configuration** (`config_cli.yaml`)
+4. **Built-in defaults** (lowest priority)
+
+## Examples by Use Case
+
+<AccordionGroup>
+  <Accordion title="Production Deployment">
+    ```bash
+    # Silent install with specific configuration
+    sudo python3 ros2_installer_cli.py \
+      --config production.yaml \
+      --silent \
+      --log-level ERROR
+    ```
+  </Accordion>
+  
+  <Accordion title="Development Setup">
+    ```bash
+    # Full desktop with debug logging
+    sudo python3 ros2_installer_cli.py \
+      --package-set desktop-full \
+      --ros-distro rolling \
+      --log-level DEBUG
+    ```
+  </Accordion>
+  
+  <Accordion title="CI/CD Pipeline">
+    ```bash
+    # Validate, then install silently
+    python3 ros2_installer_cli.py --validate-only || exit 1
+    sudo python3 ros2_installer_cli.py \
+      --package-set minimal \
+      --silent \
+      --log-level WARNING
+    ```
+  </Accordion>
+  
+  <Accordion title="Testing Configuration">
+    ```bash
+    # Dry run with custom config
+    python3 ros2_installer_cli.py \
+      --config test.yaml \
+      --dry-run \
+      --log-level INFO
+    ```
+  </Accordion>
+</AccordionGroup>

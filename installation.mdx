@@ -1,0 +1,357 @@
+---
+title: "Installation"
+description: "Install the ROS2 Installer CLI tool via Homebrew or manual installation"
+---
+
+## Prerequisites
+
+Before installing the ROS2 Installer CLI, ensure you have:
+
+<CardGroup cols={2}>
+  <Card title="Python 3" icon="python">
+    Python 3.8 or higher installed on your system
+  </Card>
+  <Card title="System Requirements" icon="server">
+    Minimum 4GB disk space, 2GB RAM
+  </Card>
+</CardGroup>
+
+## Installation Methods
+
+<Tabs>
+  <Tab title="Homebrew (Recommended)">
+    ### Install via Homebrew
+
+    The easiest way to install on macOS or Linux:
+
+    <Steps>
+      <Step title="Add the tap">
+        ```bash
+        brew tap neelashkannan/ros-installer
+        ```
+      </Step>
+
+      <Step title="Install the tool">
+        ```bash
+        brew install ros2-installer
+        ```
+
+        This will:
+        - Install the `ros2-installer` command
+        - Install Python dependencies (pyyaml, psutil)
+        - Create a default configuration at `$(brew --prefix)/etc/ros2-installer-config.yaml`
+      </Step>
+
+      <Step title="Verify installation">
+        ```bash
+        ros2-installer --version
+        ```
+
+        You should see:
+        ```
+        ROS2 CLI Installer v2.1.0
+        ```
+      </Step>
+    </Steps>
+
+    <Info>
+    The Homebrew formula automatically handles all dependencies and creates a wrapper script for easy execution.
+    </Info>
+
+    ### Post-Installation
+
+    View the default configuration:
+
+    ```bash
+    ros2-installer --show-config
+    ```
+
+    Check if your system is ready:
+
+    ```bash
+    ros2-installer --validate-only
+    ```
+  </Tab>
+
+  <Tab title="Manual Installation">
+    ### Install Manually
+
+    For more control or if Homebrew is not available:
+
+    <Steps>
+      <Step title="Clone the repository">
+        ```bash
+        git clone https://github.com/neelashkannan/ROS2-Installer-CLI.git
+        cd ROS2-Installer-CLI
+        ```
+      </Step>
+
+      <Step title="Install Python dependencies">
+        ```bash
+        pip3 install -r requirements.txt
+        ```
+
+        This installs:
+        - `pyyaml>=6.0` - YAML configuration parsing
+        - `psutil>=5.9.0` - System information gathering
+      </Step>
+
+      <Step title="Verify installation">
+        ```bash
+        python3 ros2_installer_cli.py --version
+        ```
+      </Step>
+
+      <Step title="(Optional) Create an alias">
+        Add to your shell profile (`~/.bashrc` or `~/.zshrc`):
+
+        ```bash
+        alias ros2-installer='python3 /path/to/ROS2-Installer-CLI/ros2_installer_cli.py'
+        ```
+
+        Then reload your shell:
+        ```bash
+        source ~/.bashrc  # or source ~/.zshrc
+        ```
+      </Step>
+    </Steps>
+
+    <Warning>
+    On Ubuntu, you'll need to run the installer with `sudo` for native installation:
+    ```bash
+    sudo python3 ros2_installer_cli.py
+    ```
+    </Warning>
+
+  </Tab>
+
+  <Tab title="From Source (Development)">
+    ### Development Installation
+
+    For contributors or those wanting the latest development version:
+
+    <Steps>
+      <Step title="Clone and setup">
+        ```bash
+        git clone https://github.com/neelashkannan/ROS2-Installer-CLI.git
+        cd ROS2-Installer-CLI
+        
+        # Create virtual environment (recommended)
+        python3 -m venv venv
+        source venv/bin/activate
+        
+        # Install dependencies
+        pip install -r requirements.txt
+        ```
+      </Step>
+
+      <Step title="Run directly">
+        ```bash
+        # Check version
+        python3 ros2_installer_cli.py --version
+        
+        # Validate system
+        python3 ros2_installer_cli.py --validate-only
+        
+        # Run dry run
+        python3 ros2_installer_cli.py --dry-run
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Configuration
+
+The installer uses a YAML configuration file to control behavior.
+
+### Default Configuration Location
+
+- **Homebrew**: `$(brew --prefix)/etc/ros2-installer-config.yaml`
+- **Manual**: `config_cli.yaml` in the installation directory
+
+### Configuration Structure
+
+```yaml config_cli.yaml
+# Installation Configuration
+installation:
+  ros_distro: "kilted"
+  package_set: "desktop-full"  # minimal, base, desktop, desktop-full
+  uninstall_existing: true
+  parallel_jobs: 1
+  retry_attempts: 3
+  timeout_seconds: 1200
+
+# System Configuration
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "/tmp/ros2_installation.log"
+  console: true
+
+# Validation Rules
+validation:
+  min_disk_space_gb: 4
+  min_memory_gb: 2
+  required_ubuntu_version: "24.04"
+  supported_architectures: ["amd64", "arm64", "aarch64", "x86_64"]
+
+# Performance Tuning
+performance:
+  parallel_downloads: true
+  download_cache: true
+  compression: true
+
+# Security Configuration
+security:
+  verify_signatures: true
+  check_checksums: true
+  secure_permissions: true
+  audit_logging: true
+
+# Docker Configuration (used on non-Ubuntu systems)
+docker:
+  container_name: "ros2-kilted"
+  workspace_dir: "~/ros2_ws"
+  network_mode: "host"
+```
+
+### Custom Configuration
+
+Use a custom configuration file:
+
+```bash
+ros2-installer --config /path/to/custom-config.yaml
+```
+
+### Override Configuration via CLI
+
+Command-line arguments override configuration file values:
+
+```bash
+ros2-installer \
+  --ros-distro humble \
+  --package-set desktop \
+  --log-level DEBUG \
+  --parallel-jobs 4
+```
+
+## System Requirements
+
+### Ubuntu (Native Installation)
+
+<CardGroup cols={2}>
+  <Card title="Operating System" icon="ubuntu">
+    Ubuntu 24.04 LTS (Noble Numbat)
+  </Card>
+  <Card title="Permissions" icon="key">
+    Root/sudo access required
+  </Card>
+  <Card title="Disk Space" icon="hard-drive">
+    Minimum 4GB free (8GB+ recommended for desktop-full)
+  </Card>
+  <Card title="Memory" icon="memory">
+    Minimum 2GB RAM (4GB+ recommended)
+  </Card>
+</CardGroup>
+
+### macOS / Other Linux (Docker Installation)
+
+<CardGroup cols={2}>
+  <Card title="Docker" icon="docker">
+    Docker Desktop (macOS) or Docker Engine (Linux)
+  </Card>
+  <Card title="Disk Space" icon="hard-drive">
+    Minimum 8GB free (for Docker images)
+  </Card>
+  <Card title="Memory" icon="memory">
+    Minimum 4GB RAM allocated to Docker
+  </Card>
+  <Card title="Architecture" icon="microchip">
+    x86_64 (amd64) or ARM64 (aarch64)
+  </Card>
+</CardGroup>
+
+<Note>
+Docker will be automatically installed on supported Linux distributions if not present. On macOS, Docker Desktop must be installed manually from [docker.com](https://www.docker.com/products/docker-desktop).
+</Note>
+
+## Verification
+
+Verify your installation is ready:
+
+<CodeGroup>
+```bash Version Check
+ros2-installer --version
+# Output: ROS2 CLI Installer v2.1.0
+```
+
+```bash System Validation
+ros2-installer --validate-only
+# Checks disk space, memory, architecture, and permissions
+```
+
+```bash Configuration Check
+ros2-installer --show-config
+# Displays current configuration
+```
+
+```bash Dry Run
+ros2-installer --dry-run
+# Simulates installation without making changes
+```
+</CodeGroup>
+
+## Troubleshooting
+
+### Permission Denied (Ubuntu)
+
+**Problem**: `Permission denied` errors during installation
+
+**Solution**: Run with sudo:
+```bash
+sudo ros2-installer
+# or
+sudo python3 ros2_installer_cli.py
+```
+
+### Docker Not Found (macOS)
+
+**Problem**: `Docker not found` on macOS
+
+**Solution**: Install Docker Desktop:
+1. Download from [docker.com](https://www.docker.com/products/docker-desktop)
+2. Install and start Docker Desktop
+3. Verify with: `docker --version`
+4. Run installer again
+
+### Python Dependencies Missing
+
+**Problem**: `ModuleNotFoundError: No module named 'yaml'`
+
+**Solution**: Install dependencies:
+```bash
+pip3 install pyyaml psutil
+```
+
+### Command Not Found (Homebrew)
+
+**Problem**: `ros2-installer: command not found` after Homebrew installation
+
+**Solution**: Ensure Homebrew bin is in your PATH:
+```bash
+echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+## Next Steps
+
+<Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+  Now that the installer is ready, proceed to install ROS2 on your system
+</Card>

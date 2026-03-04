@@ -1,0 +1,208 @@
+---
+title: ROS2 Distributions
+description: Supported ROS2 distributions and version information
+---
+
+# ROS2 Distributions
+
+The ROS2 Installer CLI supports multiple ROS2 distributions, allowing you to choose the version that best fits your project requirements.
+
+## Supported Distributions
+
+The following ROS2 distributions are validated and supported by the installer:
+
+### Kilted Kaiju (Default)
+
+- **Codename:** Kilted
+- **Release Date:** May 2026
+- **Status:** Latest LTS (Long Term Support)
+- **Ubuntu Version:** 24.04 (Noble Numbat)
+- **Support Until:** May 2031
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro kilted
+```
+
+### Jazzy Jalisco
+
+- **Codename:** Jazzy
+- **Release Date:** May 2024
+- **Status:** LTS
+- **Ubuntu Version:** 24.04 (Noble Numbat)
+- **Support Until:** May 2029
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro jazzy
+```
+
+### Iron Irwini
+
+- **Codename:** Iron
+- **Release Date:** May 2023
+- **Status:** Stable
+- **Ubuntu Version:** 22.04 (Jammy Jellyfish)
+- **Support Until:** November 2024
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro iron
+```
+
+### Humble Hawksbill
+
+- **Codename:** Humble
+- **Release Date:** May 2022
+- **Status:** LTS
+- **Ubuntu Version:** 22.04 (Jammy Jellyfish)
+- **Support Until:** May 2027
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro humble
+```
+
+### Rolling Ridley
+
+- **Codename:** Rolling
+- **Release Date:** Continuous
+- **Status:** Development
+- **Ubuntu Version:** Latest
+- **Support:** Rolling release (continuous updates)
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro rolling
+```
+
+<Warning>
+Rolling is a development distribution that receives continuous updates. It's recommended for testing cutting-edge features but not for production use.
+</Warning>
+
+## Distribution Validation
+
+The installer validates the selected distribution during configuration loading. Invalid distributions will cause a `ConfigurationError`.
+
+**Validation code** (source:ros2_installer_cli.py:170-174):
+
+```python
+valid_distros = ['kilted', 'jazzy', 'iron', 'humble', 'rolling']
+distro = config['installation'].get('ros_distro', 'kilted')
+if distro not in valid_distros:
+    raise ConfigurationError(f"Invalid ROS distro: {distro}")
+```
+
+## Configuration
+
+You can specify the distribution in your `config_cli.yaml`:
+
+```yaml
+installation:
+  ros_distro: 'kilted'  # kilted, jazzy, iron, humble, or rolling
+  package_set: 'desktop-full'
+  uninstall_existing: true
+```
+
+Or override it via command line:
+
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro humble --package-set desktop
+```
+
+## Platform Support
+
+### Native Installation (Ubuntu)
+
+Native installation is supported on:
+- Ubuntu 24.04 (recommended for Kilted and Jazzy)
+- Ubuntu 22.04 (recommended for Iron and Humble)
+
+**System requirements:**
+- Architecture: amd64, arm64, aarch64, or x86_64
+- Minimum disk space: 4 GB
+- Minimum memory: 2 GB
+- Sudo privileges required
+
+### Docker Installation (Non-Ubuntu)
+
+For non-Ubuntu systems (macOS, Debian, Fedora, Arch, etc.), the installer automatically uses Docker containers:
+
+**Docker image sources:**
+- Official `ros` images: ros-core and ros-base variants
+- OSRF `osrf/ros` images: desktop and desktop-full variants
+
+**Example Docker images:**
+```
+ros:kilted-ros-core
+ros:kilted-ros-base
+osrf/ros:kilted-desktop
+osrf/ros:kilted-desktop-full
+```
+
+See `_get_ros_docker_image()` method (source:ros2_installer_cli.py:628-645) for Docker image mapping.
+
+## Environment Setup
+
+After installation, the distribution-specific setup script is sourced in your `.bashrc`:
+
+```bash
+# ROS2 Kilted Setup - Added by CLI Installer
+source /opt/ros/kilted/setup.bash
+export ROS_DOMAIN_ID=0
+export ROS_LOCALHOST_ONLY=0
+source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
+```
+
+For Docker installations, the wrapper script automatically sources the correct distribution setup.
+
+## Choosing a Distribution
+
+### For Production Use
+
+Choose an **LTS (Long Term Support)** distribution:
+- **Kilted** (latest, 5-year support)
+- **Jazzy** (stable, 5-year support)
+- **Humble** (mature, 5-year support)
+
+### For Development
+
+- **Kilted** or **Jazzy** for latest features with long-term support
+- **Rolling** for cutting-edge development (unstable)
+
+### For Legacy Projects
+
+- **Humble** or **Iron** for compatibility with existing codebases
+
+## Version Verification
+
+After installation, verify your ROS2 distribution:
+
+```bash
+# Source the environment
+source ~/.bashrc
+
+# Check ROS2 version
+ros2 --version
+
+# Check environment variables
+echo $ROS_DISTRO
+```
+
+## Migration Between Distributions
+
+To switch distributions:
+
+1. Uninstall existing ROS2 (automatic if `uninstall_existing: true`)
+2. Run the installer with the new distribution:
+   ```bash
+   sudo python3 ros2_installer_cli.py --ros-distro jazzy
+   ```
+3. Update workspace dependencies:
+   ```bash
+   cd ~/ros2_ws
+   rosdep update
+   rosdep install --from-paths src --ignore-src -y
+   colcon build
+   ```
+
+## See Also
+
+- [Package Sets](/advanced/package-sets) - Installation options
+- [Troubleshooting](/advanced/troubleshooting) - Common issues
+- [ROS2 Official Documentation](https://docs.ros.org/)

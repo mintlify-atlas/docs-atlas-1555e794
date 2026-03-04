@@ -1,0 +1,123 @@
+---
+title: System Requirements
+description: Hardware and software requirements for installing ROS2 Kilted Kaiju
+---
+
+The ROS2 Installer CLI validates your system against the following requirements before installation.
+
+## Hardware Requirements
+
+### Minimum Disk Space
+
+- **Required**: 4 GB of free disk space
+- **Recommended**: 10+ GB for development and additional packages
+
+The installer checks available disk space on the root partition (`/`) during validation (ros2_installer_cli.py:304).
+
+### Minimum Memory (RAM)
+
+- **Required**: 2 GB of RAM
+- **Recommended**: 4+ GB for running simulations and development tools
+
+The system memory check is performed during validation (ros2_installer_cli.py:309).
+
+## Architecture Support
+
+The following CPU architectures are supported (ros2_installer_cli.py:313):
+
+- **amd64** - 64-bit x86 processors (Intel/AMD)
+- **arm64** - 64-bit ARM processors
+- **aarch64** - 64-bit ARM processors (alternative designation)
+- **x86_64** - 64-bit x86 processors (alternative designation)
+
+The installer automatically detects your system architecture using `platform.machine()`.
+
+## Operating System Requirements
+
+### Ubuntu (Native Installation)
+
+- **Required Version**: Ubuntu 24.04
+- **Privileges**: Root/sudo access required
+- **Package Manager**: APT (Advanced Package Tool)
+
+For Ubuntu systems, the installer performs a native installation directly on the host system (ros2_installer_cli.py:317-331).
+
+<Warning>
+  The installer must be run with sudo privileges for native Ubuntu installations:
+  ```bash
+  sudo python3 ros2_installer_cli.py
+  ```
+</Warning>
+
+### Non-Ubuntu Systems (Docker Mode)
+
+For macOS and other Linux distributions, the installer automatically uses Docker:
+
+- **Docker**: Required (automatically installed if not present)
+- **Docker Daemon**: Must be running
+- **Privileges**: May require sudo for Docker installation
+
+Supported distributions for automatic Docker installation:
+- macOS (via Homebrew)
+- Debian
+- Fedora/RHEL
+- Arch Linux
+
+<Info>
+  On non-Ubuntu systems, the installer detects your OS and automatically switches to Docker mode (ros2_installer_cli.py:333-337).
+</Info>
+
+## Additional Requirements
+
+### Network Access
+
+- Internet connection required for downloading packages
+- Access to:
+  - ROS2 package repositories (`packages.ros.org`)
+  - Docker Hub (for Docker-based installations)
+  - System package repositories
+
+### Development Tools
+
+The installer automatically installs these development tools:
+
+- `python3-rosdep` - ROS dependency management
+- `python3-colcon-common-extensions` - Build tools
+- `python3-vcstool` - Version control tools
+- `python3-argcomplete` - Command completion
+- `python3-flake8` - Python linting
+- `python3-pytest` - Python testing
+
+## System Validation
+
+The installer performs automatic system validation before installation (ros2_installer_cli.py:295-345):
+
+1. **Disk Space Check**: Verifies available space meets minimum requirements
+2. **Memory Check**: Verifies available RAM meets minimum requirements
+3. **Architecture Check**: Confirms CPU architecture is supported
+4. **OS Version Check**: For Ubuntu, validates version compatibility
+5. **Privilege Check**: For Ubuntu, verifies sudo/root access
+6. **Docker Check**: For non-Ubuntu, checks Docker availability
+
+<Check>
+  Run validation without installing:
+  ```bash
+  python3 ros2_installer_cli.py --validate-only
+  ```
+</Check>
+
+## Configuration
+
+Requirements can be customized in `config_cli.yaml`:
+
+```yaml
+validation:
+  min_disk_space_gb: 4
+  min_memory_gb: 2
+  required_ubuntu_version: "24.04"
+  supported_architectures: ["amd64", "arm64", "aarch64", "x86_64"]
+```
+
+<Note>
+  The installer creates a default configuration file if none exists at `config_cli.yaml`.
+</Note>

@@ -1,0 +1,386 @@
+---
+title: Troubleshooting
+description: Common issues, error messages, and solutions for ROS2 installation
+---
+
+# Troubleshooting
+
+This guide covers common issues you may encounter during ROS2 installation and their solutions.
+
+## Configuration Errors
+
+### ConfigurationError: Invalid ROS distro
+
+**Error message:**
+```
+ConfigurationError: Invalid ROS distro: <distro_name>
+```
+
+**Cause:** The specified ROS distribution is not supported.
+
+**Solution:** Use one of the valid distributions:
+```bash
+sudo python3 ros2_installer_cli.py --ros-distro kilted  # or jazzy, iron, humble, rolling
+```
+
+**Source:** ros2_installer_cli.py:170-174
+
+### ConfigurationError: Missing required section
+
+**Error message:**
+```
+ConfigurationError: Missing required section: <section_name>
+```
+
+**Cause:** Configuration file is missing required sections (`installation` or `logging`).
+
+**Solution:** Delete the config file to regenerate defaults:
+```bash
+rm config_cli.yaml
+sudo python3 ros2_installer_cli.py
+```
+
+Or manually add the missing section to your `config_cli.yaml`.
+
+**Source:** ros2_installer_cli.py:163-168
+
+## Validation Errors
+
+### ValidationError: Insufficient disk space
+
+**Error message:**
+```
+Insufficient disk space: X.XGB < 4GB
+```
+
+**Cause:** Not enough free disk space for installation.
+
+**Solution:**
+1. Free up disk space:
+   ```bash
+   sudo apt-get autoremove
+   sudo apt-get clean
+   ```
+2. Use a minimal package set:
+   ```bash
+   sudo python3 ros2_installer_cli.py --package-set minimal
+   ```
+
+**Source:** ros2_installer_cli.py:302-305
+
+### ValidationError: Insufficient memory
+
+**Error message:**
+```
+Insufficient memory: X.XGB < 2GB
+```
+
+**Cause:** System has less than 2GB RAM.
+
+**Solution:** Consider using Docker mode on a system with more memory, or proceed at your own risk.
+
+**Source:** ros2_installer_cli.py:307-310
+
+### ValidationError: Unsupported architecture
+
+**Error message:**
+```
+Unsupported architecture: <arch>
+```
+
+**Cause:** System architecture is not in the supported list.
+
+**Supported architectures:** amd64, arm64, aarch64, x86_64
+
+**Solution:** Check your architecture and verify it's supported:
+```bash
+uname -m  # Check your architecture
+```
+
+**Source:** ros2_installer_cli.py:312-315
+
+### ValidationError: Script must be run with sudo
+
+**Error message:**
+```
+Script must be run with sudo privileges for native Ubuntu installation
+```
+
+**Cause:** Running the installer without sudo on Ubuntu.
+
+**Solution:**
+```bash
+sudo python3 ros2_installer_cli.py
+```
+
+**Source:** ros2_installer_cli.py:329-331
+
+## Installation Errors
+
+### Installation timeout
+
+**Error message:**
+```
+Command timed out (attempt X/3): <command>
+```
+
+**Cause:** Package installation took longer than the timeout period.
+
+**Solution:**
+1. The installer automatically retries 3 times with exponential backoff
+2. For desktop-full, the timeout is 20 minutes (1200 seconds)
+3. Check your internet connection
+4. Try a smaller package set if timeouts persist
+
+**Source:** ros2_installer_cli.py:459-465
+
+### Package installation failed
+
+**Error message:**
+```
+Failed to install <package>: <error>
+```
+
+**Cause:** APT package installation failed.
+
+**Solution:**
+1. Check package management system:
+   ```bash
+   sudo dpkg --configure -a
+   sudo apt-get update
+   ```
+2. The installer automatically cleans up stale locks
+3. Check logs for detailed error messages
+
+**Source:** ros2_installer_cli.py:478-492
+
+### Docker daemon not running
+
+**Error message:**
+```
+Docker daemon did not start within the timeout. Please start Docker manually and re-run this installer.
+```
+
+**Cause:** Docker is installed but the daemon is not running (non-Ubuntu systems).
+
+**Solution:**
+
+**On macOS:**
+```bash
+open -a Docker  # Start Docker Desktop
+```
+
+**On Linux:**
+```bash
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+**Source:** ros2_installer_cli.py:615-626
+
+### Installation verification failed
+
+**Error message:**
+```
+InstallationError: ROS2 command test failed: <error>
+```
+
+**Cause:** ROS2 installation completed but the `ros2` command is not working.
+
+**Solution:**
+1. Check if ROS2 directory exists:
+   ```bash
+   ls /opt/ros/<distro>
+   ```
+2. Manually source the setup script:
+   ```bash
+   source /opt/ros/<distro>/setup.bash
+   ros2 --help
+   ```
+3. Check the installation log for details
+
+**Source:** ros2_installer_cli.py:1165-1194
+
+## Rollback Issues
+
+If installation fails, the installer automatically attempts to rollback changes.
+
+### Rollback process
+
+1. Remove newly installed packages
+2. Restore backup configuration files
+3. Clean up partial installations
+
+**Rollback code** (source:ros2_installer_cli.py:412-436):
+
+```python
+def _rollback_installation(self, initial_state: Dict):
+    """Rollback installation to previous state."""
+    # Remove installed packages
+    new_packages = set(self.installation_state['packages_installed']) - 
+                   set(initial_state.get('packages_installed', []))
+    
+    # Restore backup files
+    for backup_file in self.installation_state.get('backup_files', []):
+        original_file = backup_file.rsplit('.backup.', 1)[0]
+        if os.path.exists(backup_file):
+            os.rename(backup_file, original_file)
+```
+
+### Manual rollback
+
+If automatic rollback fails:
+
+1. Remove ROS2 packages:
+   ```bash
+   sudo apt-get autoremove -y 'ros-*'
+   sudo apt-get autoremove -y
+   ```
+
+2. Restore backup files:
+   ```bash
+   ls ~/.bashrc.backup.*
+   cp ~/.bashrc.backup.<session_id> ~/.bashrc
+   ```
+
+3. Remove ROS2 repository:
+   ```bash
+   sudo rm /etc/apt/sources.list.d/ros2.list
+   sudo apt-get update
+   ```
+
+## Permission Errors
+
+### Cannot write to log file
+
+**Error:** Permission denied when writing to `/tmp/ros2_installation.log`
+
+**Solution:** The installer automatically falls back to your home directory:
+```
+~/ros2_installation_<session_id>.log
+```
+
+**Source:** ros2_installer_cli.py:195-203
+
+### Cannot modify system files
+
+**Error:** Permission errors during installation
+
+**Solution:** Ensure you're running with sudo:
+```bash
+sudo python3 ros2_installer_cli.py
+```
+
+## Docker-Specific Issues
+
+### Docker installation failed on unsupported distro
+
+**Error message:**
+```
+Automatic Docker installation is not supported on '<distro>'. Please install Docker manually.
+```
+
+**Cause:** Running on a Linux distribution without automatic Docker installation support.
+
+**Supported:** Ubuntu, Debian, Fedora, RHEL, Arch
+
+**Solution:** Install Docker manually:
+```bash
+# Visit https://docs.docker.com/engine/install/
+# Then re-run the installer
+```
+
+**Source:** ros2_installer_cli.py:602-606
+
+### Container creation failed
+
+**Error:** Docker container creation fails
+
+**Solution:**
+1. Check Docker is running:
+   ```bash
+   docker info
+   ```
+2. Remove existing container:
+   ```bash
+   docker rm -f ros2-<distro>
+   ```
+3. Re-run the installer
+
+**Source:** ros2_installer_cli.py:725-761
+
+## Network Issues
+
+### Repository not accessible
+
+**Error:** Cannot fetch ROS2 packages or GPG keys
+
+**Solution:**
+1. Check internet connectivity
+2. Verify you can access:
+   ```bash
+   curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key
+   ```
+3. Check firewall/proxy settings
+
+### Package download timeout
+
+**Solution:** The installer retries failed downloads up to 3 times with exponential backoff.
+
+**Source:** ros2_installer_cli.py:438-476
+
+## Debugging Tips
+
+### Enable debug logging
+
+```bash
+sudo python3 ros2_installer_cli.py --log-level DEBUG
+```
+
+### Check installation logs
+
+**Default log location:** `/tmp/ros2_installation.log`
+
+**Fallback location:** `~/ros2_installation_<session_id>.log`
+
+```bash
+# View logs
+tail -f /tmp/ros2_installation.log
+
+# Search for errors
+grep -i error /tmp/ros2_installation.log
+```
+
+### Validate system only
+
+```bash
+sudo python3 ros2_installer_cli.py --validate-only
+```
+
+### Dry run mode
+
+```bash
+sudo python3 ros2_installer_cli.py --dry-run
+```
+
+### Check system information
+
+```bash
+sudo python3 ros2_installer_cli.py --show-config
+```
+
+## Getting Help
+
+If you encounter issues not covered here:
+
+1. Check the log files for detailed error messages
+2. Review the session ID in logs for tracking
+3. Run with `--log-level DEBUG` for verbose output
+4. Verify system requirements are met
+5. Try a minimal installation first
+
+## See Also
+
+- [Logging](/advanced/logging) - Log configuration and debugging
+- [Package Sets](/advanced/package-sets) - Installation options
+- [ROS2 Distributions](/advanced/ros-distributions) - Supported versions

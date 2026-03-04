@@ -1,0 +1,142 @@
+---
+title: Configuration Schema
+description: Complete YAML configuration schema for ROS2 Installer CLI
+---
+
+The ROS2 Installer CLI uses a YAML configuration file to customize the installation process. By default, the installer looks for `config_cli.yaml` in the current directory. If not found, it automatically creates one with default values.
+
+## Default Configuration File
+
+The installer generates a default configuration with the following structure:
+
+```yaml
+# ROS2 Kilted Kaiju CLI Installer Configuration
+
+# Installation Configuration
+installation:
+  ros_distro: "kilted"
+  package_set: "desktop-full"  # minimal, base, desktop, desktop-full
+  uninstall_existing: true
+  parallel_jobs: 4
+  retry_attempts: 3
+  timeout_seconds: 300
+
+# System Configuration
+system:
+  update_system: true
+  install_dependencies: true
+  backup_configs: true
+  verify_compatibility: true
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "/tmp/ros2_installation.log"
+  console: true
+
+# Validation Rules
+validation:
+  min_disk_space_gb: 4
+  min_memory_gb: 2
+  required_ubuntu_version: "24.04"
+  supported_architectures: ["amd64", "arm64", "aarch64", "x86_64"]
+
+# Performance Tuning
+performance:
+  parallel_downloads: true
+  download_cache: true
+  compression: true
+
+# Security Configuration
+security:
+  verify_signatures: true
+  check_checksums: true
+  secure_permissions: true
+  audit_logging: true
+
+# Docker Configuration (used on non-Ubuntu systems)
+docker:
+  container_name: "ros2-kilted"
+  workspace_dir: "~/ros2_ws"
+  network_mode: "host"
+```
+
+## Configuration Sections
+
+The configuration is organized into seven main sections:
+
+### Installation
+
+Controls the core ROS2 installation parameters including distribution, package set, and installation behavior.
+
+**Required**: Yes
+
+### System
+
+Defines system-level operations like package updates, dependency installation, and configuration backups.
+
+**Required**: No (uses defaults if omitted)
+
+### Logging
+
+Configures the logging system for installation tracking and debugging.
+
+**Required**: Yes
+
+### Validation
+
+Sets minimum system requirements and compatibility checks before installation.
+
+**Required**: No (uses defaults if omitted)
+
+### Performance
+
+Optimization settings for faster downloads and installation.
+
+**Required**: No (uses defaults if omitted)
+
+### Security
+
+Security-related settings for package verification and audit logging.
+
+**Required**: No (uses defaults if omitted)
+
+### Docker
+
+Docker-specific configuration used when installing on non-Ubuntu systems.
+
+**Required**: No (uses defaults if omitted)
+
+## Using Custom Configuration
+
+You can specify a custom configuration file using the `--config` flag:
+
+```bash
+sudo python3 ros2_installer_cli.py --config my_custom_config.yaml
+```
+
+## Configuration Validation
+
+The installer validates the configuration on startup and will raise a `ConfigurationError` if:
+
+- Required sections (`installation`, `logging`) are missing
+- The `ros_distro` is not one of: `kilted`, `jazzy`, `iron`, `humble`, `rolling`
+- The configuration file format is invalid
+
+## Command-Line Overrides
+
+You can override specific configuration values via command-line arguments:
+
+```bash
+sudo python3 ros2_installer_cli.py \
+  --ros-distro humble \
+  --package-set desktop \
+  --log-level DEBUG \
+  --parallel-jobs 8
+```
+
+Command-line arguments take precedence over configuration file values.
+
+## Location Reference
+
+The default configuration is created by the `_create_default_config` method in `ros2_installer_cli.py:114-161`.

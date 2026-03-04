@@ -1,97 +1,281 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: ROS2 Installer CLI
+description: Install ROS2 on Ubuntu natively or any OS via Docker with a single command
+mode: custom
 ---
 
-## Setting up
+<div className="relative overflow-hidden bg-gradient-to-br from-[#0E7490] via-[#22D3EE] to-[#7DD3FC] dark:from-[#0a1929] dark:via-[#0E7490] dark:to-[#22D3EE] py-20">
+  <div className="max-w-6xl mx-auto px-6 lg:px-8">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+          Install ROS2 with a Single Command
+        </h1>
+        <p className="text-lg sm:text-xl text-white/90 max-w-2xl mb-8">
+          The simplest way to install ROS2 on Ubuntu (native) or any other OS (via Docker). No complex setup required.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a
+            href="/quickstart"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-[#0E7490] font-semibold hover:bg-gray-100 transition-colors"
+          >
+            Get Started
+            <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a
+            href="/commands/overview"
+            className="inline-flex items-center px-6 py-3 rounded-lg border border-white/30 bg-white/10 text-white font-semibold hover:bg-white/20 transition-colors"
+          >
+            View Commands
+          </a>
+        </div>
+      </div>
+      <div className="lg:col-span-5 hidden lg:block">
+        <div className="rounded-lg bg-[#1a1d27] dark:bg-[#0f1117] p-6 shadow-2xl">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          </div>
+          <pre className="text-sm text-gray-300 overflow-x-auto">
+            <code>{`# Install via Homebrew
+brew tap neelashkannan/ros-installer
+brew install ros2-installer
 
-Get your documentation site up and running in minutes.
+# Run interactive installer
+ros2-installer
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+# Or use silent mode
+ros2-installer --silent \\
+  --ros-distro humble \\
+  --package-set desktop`}</code>
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-## Make it yours
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-4">
+    Quick Start
+  </h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">
+    Get ROS2 up and running in three simple steps
+  </p>
 
-Design a docs site that looks great and empowers your users.
+  <Steps>
+    <Step title="Install the CLI tool">
+      Install via Homebrew for the easiest setup:
+      
+      ```bash
+      brew tap neelashkannan/ros-installer
+      brew install ros2-installer
+      ```
+      
+      Or manually with Python:
+      
+      ```bash
+      git clone https://github.com/neelashkannan/ROS2-Installer-CLI.git
+      cd ROS2-Installer-CLI
+      pip3 install -r requirements.txt
+      ```
+    </Step>
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+    <Step title="Run the installer">
+      Launch the interactive installer to choose your ROS2 distribution and package set:
+      
+      ```bash
+      # Interactive mode (recommended for first-time users)
+      ros2-installer
+      
+      # Or use silent mode for automation
+      ros2-installer --silent --ros-distro humble --package-set desktop
+      ```
+      
+      <Info>
+        On Ubuntu, the installer will install ROS2 natively via apt. On macOS and other systems, it uses Docker automatically.
+      </Info>
+    </Step>
 
-## Create beautiful pages
+    <Step title="Verify installation">
+      Once installation completes, verify ROS2 is working:
+      
+      ```bash
+      # Ubuntu
+      source ~/.bashrc
+      ros2 --help
+      
+      # macOS / Docker
+      ros2 topic list
+      ```
+      
+      You should see ROS2 commands available and ready to use.
+    </Step>
+  </Steps>
+</div>
 
-Everything you need to create world-class documentation.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-4">
+    Key Features
+  </h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">
+    Everything you need for a smooth ROS2 installation experience
+  </p>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+  <CardGroup cols={2}>
+    <Card title="Dual Installation Modes" icon="server" href="/modes/native-ubuntu">
+      Native installation on Ubuntu via apt, or Docker-based installation for macOS and other platforms
+    </Card>
+    <Card title="Multiple ROS2 Distributions" icon="layers" href="/advanced/ros-distributions">
+      Support for kilted, jazzy, iron, humble, and rolling distributions
+    </Card>
+    <Card title="Flexible Package Sets" icon="cubes" href="/advanced/package-sets">
+      Choose from minimal, base, desktop, or desktop-full to match your needs
+    </Card>
+    <Card title="System Validation" icon="check-circle" href="/commands/options">
+      Pre-installation validation ensures your system meets requirements
+    </Card>
+    <Card title="Interactive & Silent Modes" icon="terminal" href="/usage/interactive-mode">
+      Interactive prompts for beginners, silent mode for automation and CI/CD
+    </Card>
+    <Card title="Automatic Rollback" icon="rotate-left" href="/advanced/troubleshooting">
+      Installation failures trigger automatic rollback to previous state
+    </Card>
+  </CardGroup>
+</div>
 
-## Need inspiration?
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-4">
+    Explore by Topic
+  </h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">
+    Dive deeper into specific areas of the ROS2 Installer CLI
+  </p>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <a
+      href="/usage/interactive-mode"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#22D3EE] dark:hover:border-[#22D3EE] overflow-hidden no-underline transition-colors"
+    >
+      <div className="h-56 bg-gradient-to-br from-[#7DD3FC] to-[#22D3EE] dark:from-[#0E7490] dark:to-[#22D3EE] flex items-center justify-center overflow-hidden">
+        <svg className="w-24 h-24 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div className="p-6 bg-white dark:bg-[#1a1d27]">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+          Usage Guide
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Learn how to use interactive mode, silent mode, and configure the installer with YAML files
+        </p>
+        <span className="text-sm font-medium text-[#22D3EE] group-hover:text-[#0E7490] dark:group-hover:text-[#7DD3FC] inline-flex items-center">
+          Explore usage guide
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </div>
+    </a>
+
+    <a
+      href="/commands/overview"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#22D3EE] dark:hover:border-[#22D3EE] overflow-hidden no-underline transition-colors"
+    >
+      <div className="h-56 bg-gradient-to-br from-[#22D3EE] to-[#0E7490] dark:from-[#22D3EE] dark:to-[#0a1929] flex items-center justify-center overflow-hidden">
+        <svg className="w-24 h-24 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+      </div>
+      <div className="p-6 bg-white dark:bg-[#1a1d27]">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+          Command Reference
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Complete reference for all command-line options, flags, and configuration parameters
+        </p>
+        <span className="text-sm font-medium text-[#22D3EE] group-hover:text-[#0E7490] dark:group-hover:text-[#7DD3FC] inline-flex items-center">
+          View all commands
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </div>
+    </a>
+
+    <a
+      href="/reference/config-schema"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#22D3EE] dark:hover:border-[#22D3EE] overflow-hidden no-underline transition-colors"
+    >
+      <div className="h-56 bg-gradient-to-br from-[#0E7490] to-[#0a1929] dark:from-[#0E7490] dark:to-[#0f1117] flex items-center justify-center overflow-hidden">
+        <svg className="w-24 h-24 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      </div>
+      <div className="p-6 bg-white dark:bg-[#1a1d27]">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+          Configuration Reference
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Detailed documentation of all YAML configuration options and system requirements
+        </p>
+        <span className="text-sm font-medium text-[#22D3EE] group-hover:text-[#0E7490] dark:group-hover:text-[#7DD3FC] inline-flex items-center">
+          Read the reference
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </div>
+    </a>
+
+    <a
+      href="/advanced/troubleshooting"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#22D3EE] dark:hover:border-[#22D3EE] overflow-hidden no-underline transition-colors"
+    >
+      <div className="h-56 bg-gradient-to-br from-[#7DD3FC] to-[#0E7490] dark:from-[#22D3EE] dark:to-[#0a1929] flex items-center justify-center overflow-hidden">
+        <svg className="w-24 h-24 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      </div>
+      <div className="p-6 bg-white dark:bg-[#1a1d27]">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+          Advanced Topics
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Troubleshooting, logging, package sets, and ROS2 distribution details
+        </p>
+        <span className="text-sm font-medium text-[#22D3EE] group-hover:text-[#0E7490] dark:group-hover:text-[#7DD3FC] inline-flex items-center">
+          Explore advanced topics
+          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="rounded-2xl bg-gradient-to-r from-[#22D3EE] to-[#0E7490] dark:from-[#0E7490] dark:to-[#0a1929] p-8 md:p-12">
+    <div className="max-w-3xl">
+      <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+        Ready to install ROS2?
+      </h2>
+      <p className="text-lg text-white/90 mb-6">
+        Get started with the quickstart guide and install ROS2 in minutes, whether you're on Ubuntu, macOS, or any other platform.
+      </p>
+      <a
+        href="/quickstart"
+        className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-[#0E7490] font-semibold hover:bg-gray-100 transition-colors"
+      >
+        Get Started Now
+        <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>

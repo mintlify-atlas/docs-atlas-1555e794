@@ -1,0 +1,582 @@
+---
+title: "Docker-Based Installation"
+description: "How ROS2 is installed via Docker containers on macOS and non-Ubuntu systems"
+---
+
+## Overview
+
+The Docker-based installation mode is automatically used for non-Ubuntu systems including macOS, Debian, Fedora, Arch Linux, and others. This approach creates a containerized ROS2 environment with a convenient wrapper script for seamless command execution.
+
+<Info>
+  Docker installation provides a consistent ROS2 environment across different operating systems without modifying the host system.
+</Info>
+
+## When Docker Mode is Used
+
+The installer automatically selects Docker mode when:
+
+```python
+def _is_docker_mode(self) -> bool:
+    """Check if installation should use Docker (non-Ubuntu systems)."""
+    return not self._is_ubuntu()
+
+def install_ros2(self, silent: bool = False) -> InstallationResult:
+    """Main installation method — routes to native or Docker based on OS."""
+    if self._is_docker_mode():
+        return self.install_ros2_docker(silent)
+    return self._install_ros2_native(silent)
+```
+
+Supported systems:
+- **macOS** (Darwin)
+- **Debian** Linux
+- **Fedora** / RHEL
+- **Arch** Linux
+- Any other non-Ubuntu Linux distribution
+
+## Installation Flow
+
+The Docker installation is handled by `install_ros2_docker()` and follows these steps:
+
+### Step 1: Docker Installation Check
+
+Checks if Docker is already installed:
+
+```python
+def _check_docker_installed(self) -> bool:
+    """Check if Docker is installed and accessible."""
+    try:
+        result = subprocess.run(
+            "docker --version", shell=True,
+            capture_output=True, text=True, timeout=10
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+```
+
+If Docker is not found, it will be installed automatically.
+
+### Step 2: Automatic Docker Installation
+
+Installs Docker based on the detected operating system:
+
+<Tabs>
+  <Tab title="macOS">
+    ```python
+    def _install_docker_macos(self):
+        # Check for Homebrew
+        if not shutil.which("brew"):
+            raise InstallationError(
+                "Homebrew is required to install Docker on macOS. "
+                "Install it from https://brew.sh"
+            )
+        
+        # Install Docker via Homebrew
+        subprocess.run(
+            "brew install --cask docker",
+            shell=True, check=True, timeout=600
+        )
+        
+        # Wait for Docker daemon
+        self._wait_for_docker_daemon()
+    ```
+    
+    <Note>
+      On macOS, you need to manually open Docker Desktop after installation to start the daemon.
+    </Note>
+  </Tab>
+  
+  <Tab title="Debian">
+    ```python
+    # Add Docker's official GPG key
+    sudo apt-get update
+    sudo apt-get install -y ca-certificates curl gnupg
+    sudo install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/debian/gpg | \
+        sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    
+    # Add Docker repository
+    echo "deb [arch=$(dpkg --print-architecture) \
+        signed-by=/etc/apt/keyrings/docker.gpg] \
+        https://download.docker.com/linux/debian \
+        $(. /etc/os-release && echo $VERSION_CODENAME) stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Install Docker
+    sudo apt-get update
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
+        docker-buildx-plugin docker-compose-plugin
+    ```
+  </Tab>
+  
+  <Tab title="Fedora/RHEL">
+    ```python
+    # Add Docker repository
+    sudo dnf -y install dnf-plugins-core
+    sudo dnf config-manager --add-repo \
+        https://download.docker.com/linux/fedora/docker-ce.repo
+    
+    # Install Docker
+    sudo dnf install -y docker-ce docker-ce-cli containerd.io \
+        docker-buildx-plugin docker-compose-plugin
+    
+    # Start and enable Docker service
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    ```
+  </Tab>
+  
+  <Tab title="Arch Linux">
+    ```python
+    # Install Docker
+    sudo pacman -Sy --noconfirm docker
+    
+    # Start and enable Docker service
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    ```
+  </Tab>
+</Tabs>
+
+### Step 3: Docker Daemon Verification
+
+Waits for the Docker daemon to become responsive:
+
+```python
+def _wait_for_docker_daemon(self, timeout: int = 120):
+    """Wait for the Docker daemon to become responsive."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if self._check_docker_running():
+            self.logger.info("✅ Docker daemon is running")
+            return
+        time.sleep(3)
+    raise InstallationError(
+        "Docker daemon did not start within the timeout."
+    )
+
+def _check_docker_running(self) -> bool:
+    """Check if the Docker daemon is running."""
+    try:
+        result = subprocess.run(
+            "docker info", shell=True,
+            capture_output=True, text=True, timeout=15
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+```
+
+### Step 4: Generate Dockerfile
+
+Creates a custom Dockerfile based on official ROS2 images:
+
+```python
+def _generate_dockerfile(self) -> str:
+    base_image = self._get_ros_docker_image()
+    distro = self.config['installation']['ros_distro']
+    package_set = self.config['installation'].get('package_set', 'desktop-full')
+    
+    dockerfile = f"""
+# Auto-generated by ROS2 CLI Installer v{__version__}
+FROM {base_image}
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install development tools
+RUN apt-get update && apt-get install -y --no-install-recommends \\
+    python3-rosdep \\
+    python3-colcon-common-extensions \\
+    python3-vcstool \\
+    python3-argcomplete \\
+    python3-flake8 \\
+    python3-pytest \\
+    && rm -rf /var/lib/apt/lists/*
+
+# Initialize rosdep
+RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then \\
+      rosdep init; \\
+    fi && rosdep update
+
+# Setup entrypoint
+RUN echo '#!/bin/bash' > /ros_entrypoint.sh && \\
+    echo 'set -e' >> /ros_entrypoint.sh && \\
+    echo 'source /opt/ros/{distro}/setup.bash' >> /ros_entrypoint.sh && \\
+    echo 'exec "$@"' >> /ros_entrypoint.sh && \\
+    chmod +x /ros_entrypoint.sh
+
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["bash"]
+"""
+    return dockerfile
+```
+
+#### Base Image Selection
+
+The base image is chosen based on the package set:
+
+```python
+def _get_ros_docker_image(self) -> str:
+    distro = self.config['installation']['ros_distro']
+    package_set = self.config['installation'].get('package_set', 'desktop-full')
+    
+    image_map = {
+        'minimal':      f"ros:{distro}-ros-core",
+        'base':         f"ros:{distro}-ros-base",
+        'desktop':      f"osrf/ros:{distro}-desktop",
+        'desktop-full': f"osrf/ros:{distro}-desktop-full",
+    }
+    return image_map.get(package_set, f"osrf/ros:{distro}-desktop-full")
+```
+
+| Package Set | Base Image | Source Repository |
+|-------------|------------|-------------------|
+| minimal | `ros:{distro}-ros-core` | [ros](https://hub.docker.com/_/ros) |
+| base | `ros:{distro}-ros-base` | [ros](https://hub.docker.com/_/ros) |
+| desktop | `osrf/ros:{distro}-desktop` | [osrf/ros](https://hub.docker.com/r/osrf/ros) |
+| desktop-full | `osrf/ros:{distro}-desktop-full` | [osrf/ros](https://hub.docker.com/r/osrf/ros) |
+
+<Note>
+  For desktop and desktop-full variants, additional packages like Gazebo, Navigation2, MoveIt, SLAM Toolbox, and Robot Localization are included.
+</Note>
+
+### Step 5: Build Docker Image
+
+Builds the custom ROS2 Docker image:
+
+```python
+def _build_docker_image(self) -> str:
+    distro = self.config['installation']['ros_distro']
+    image_tag = f"ros2-installer/{distro}:latest"
+    
+    # Create build directory
+    build_dir = Path.home() / ".ros2-installer" / "docker"
+    build_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Write Dockerfile
+    dockerfile_path = build_dir / "Dockerfile"
+    dockerfile_path.write_text(self._generate_dockerfile())
+    
+    # Build image (30 minute timeout)
+    subprocess.run(
+        f"docker build -t {image_tag} {build_dir}",
+        shell=True, check=True, timeout=1800
+    )
+    
+    return image_tag
+```
+
+Build artifacts are stored in: `~/.ros2-installer/docker/`
+
+### Step 6: Create Docker Container
+
+Creates a persistent Docker container with workspace mounting:
+
+```python
+def _create_docker_container(self, image_tag: str) -> str:
+    distro = self.config['installation']['ros_distro']
+    container_name = self.config.get('docker', {}).get(
+        'container_name', f"ros2-{distro}"
+    )
+    workspace_dir = self.config.get('docker', {}).get(
+        'workspace_dir', str(Path.home() / "ros2_ws")
+    )
+    
+    # Create host workspace directory
+    Path(workspace_dir).mkdir(parents=True, exist_ok=True)
+    
+    # Remove existing container if present
+    subprocess.run(
+        f"docker rm -f {container_name} 2>/dev/null",
+        shell=True, capture_output=True
+    )
+    
+    # Create container
+    docker_run_cmd = (
+        f"docker create "
+        f"--name {container_name} "
+        f"-it "
+        f"--network host "
+        f"-v {workspace_dir}:/root/ros2_ws "
+        f"-e DISPLAY=${{DISPLAY:-:0}} "
+        f"-e ROS_DOMAIN_ID=0 "
+        f"{image_tag} "
+        f"bash"
+    )
+    
+    subprocess.run(docker_run_cmd, shell=True, check=True, timeout=60)
+    return container_name
+```
+
+Container configuration:
+- **Network mode**: `host` (allows ROS2 to communicate with other nodes)
+- **Workspace volume**: Host directory mounted to `/root/ros2_ws` in container
+- **Display**: Forwarded for GUI applications (RViz, Gazebo)
+- **ROS_DOMAIN_ID**: Set to 0 for multi-robot systems
+
+### Step 7: Create ROS2 Wrapper Script
+
+Installs a host-side `ros2` command that forwards to the container:
+
+```python
+def _create_ros2_wrapper_script(self, container_name: str):
+    distro = self.config['installation']['ros_distro']
+    
+    wrapper_content = f"""#!/usr/bin/env bash
+# ROS2 Docker wrapper — generated by ROS2 CLI Installer v{__version__}
+# Container: {container_name}
+set -e
+
+CONTAINER="{container_name}"
+
+# Start the container if it isn't running
+if [ "$(docker inspect -f '{{{{.State.Running}}}}' "$CONTAINER" 2>/dev/null)" != "true" ]; then
+    docker start "$CONTAINER" > /dev/null
+fi
+
+if [ $# -eq 0 ]; then
+    # No arguments — open an interactive shell inside the container
+    exec docker exec -it "$CONTAINER" bash
+else
+    # Forward the command into the container
+    exec docker exec -it "$CONTAINER" bash -ic "source /opt/ros/{distro}/setup.bash && ros2 $*"
+fi
+"""
+    
+    # Determine install location
+    if self.system_info.is_macos:
+        bin_dir = Path.home() / ".local" / "bin"
+    else:
+        bin_dir = Path("/usr/local/bin")
+    
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    wrapper_path = bin_dir / "ros2"
+    wrapper_path.write_text(wrapper_content)
+    wrapper_path.chmod(0o755)
+```
+
+#### Wrapper Script Location
+
+| Operating System | Installation Path |
+|-----------------|-------------------|
+| macOS | `~/.local/bin/ros2` |
+| Linux | `/usr/local/bin/ros2` |
+
+<Note>
+  On macOS, the installer automatically adds `~/.local/bin` to your PATH by modifying shell configuration files (`.zshrc` or `.bash_profile`).
+</Note>
+
+### Step 8: Verify Installation
+
+Tests the Docker-based ROS2 installation:
+
+```python
+def _verify_docker_installation(self, container_name: str):
+    distro = self.config['installation']['ros_distro']
+    
+    # Start container
+    subprocess.run(
+        f"docker start {container_name}",
+        shell=True, check=True, capture_output=True, timeout=30
+    )
+    
+    # Test ros2 command inside container
+    result = subprocess.run(
+        f"docker exec {container_name} bash -c "
+        f"'source /opt/ros/{distro}/setup.bash && ros2 --help'",
+        shell=True, capture_output=True, text=True, timeout=30
+    )
+    
+    if result.returncode != 0:
+        raise InstallationError(
+            f"ROS2 verification failed inside container: {result.stderr}"
+        )
+```
+
+## Using the Wrapper Script
+
+The wrapper script provides seamless access to ROS2 commands:
+
+<CodeGroup>
+```bash Interactive Shell
+# Open a shell inside the container
+ros2
+
+# Inside container, all ROS2 commands work normally:
+ros2 topic list
+ros2 node list
+```
+
+```bash Direct Commands
+# Run ROS2 commands directly from host
+ros2 topic list
+ros2 run demo_nodes_cpp talker
+ros2 launch turtlesim_launch_file.py
+```
+
+```bash Container Management
+# The wrapper automatically:
+# 1. Starts the container if stopped
+# 2. Sources the ROS2 setup script
+# 3. Executes your command
+# 4. Keeps the container running for future commands
+```
+</CodeGroup>
+
+## Workspace Mounting
+
+Your host workspace directory is automatically mounted in the container:
+
+```bash
+# Default workspace location (configurable in config_cli.yaml)
+Host:      ~/ros2_ws
+Container: /root/ros2_ws
+```
+
+<Tip>
+  Files created in either location are immediately visible in the other, allowing you to edit code on your host system and build/run it in the container.
+</Tip>
+
+Example workflow:
+
+```bash
+# Create a package on host (using your favorite editor)
+cd ~/ros2_ws
+mkdir -p src
+cd src
+
+# Build inside container
+ros2  # Opens shell
+cd /root/ros2_ws
+colcon build
+source install/setup.bash
+ros2 run my_package my_node
+```
+
+## Container Lifecycle
+
+<Steps>
+  <Step title="Container creation">
+    Created once during installation with name `ros2-{distro}` (default: `ros2-kilted`)
+  </Step>
+  
+  <Step title="Auto-start on command">
+    The wrapper script automatically starts the container when needed
+  </Step>
+  
+  <Step title="Persistent state">
+    Container remains running after commands complete for faster subsequent access
+  </Step>
+  
+  <Step title="Manual management">
+    ```bash
+    # Stop container
+    docker stop ros2-kilted
+    
+    # Restart container
+    docker restart ros2-kilted
+    
+    # View container logs
+    docker logs ros2-kilted
+    
+    # Remove container (requires reinstall)
+    docker rm -f ros2-kilted
+    ```
+  </Step>
+</Steps>
+
+## Configuration Options
+
+Docker-specific settings in `config_cli.yaml`:
+
+```yaml
+docker:
+  container_name: 'ros2-kilted'           # Name of the Docker container
+  workspace_dir: '~/ros2_ws'              # Host workspace directory
+  network_mode: 'host'                    # Docker network mode
+```
+
+## Advantages of Docker Mode
+
+<CardGroup cols={2}>
+  <Card title="Clean Installation" icon="broom">
+    No system-wide changes to host OS. ROS2 is completely isolated in the container.
+  </Card>
+  
+  <Card title="Cross-Platform" icon="laptop">
+    Works consistently across macOS, Debian, Fedora, Arch, and other systems.
+  </Card>
+  
+  <Card title="Easy Cleanup" icon="trash">
+    Simply remove the container and image to completely uninstall ROS2.
+  </Card>
+  
+  <Card title="Multiple Versions" icon="layer-group">
+    Run different ROS2 distributions simultaneously in separate containers.
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Docker daemon not starting (macOS)">
+    On macOS, Docker Desktop must be manually opened after installation:
+    
+    1. Open Docker Desktop from Applications
+    2. Wait for Docker to finish starting
+    3. Re-run the installer
+  </Accordion>
+  
+  <Accordion title="Permission denied error">
+    On Linux, add your user to the `docker` group:
+    
+    ```bash
+    sudo usermod -aG docker $USER
+    newgrp docker  # Or log out and back in
+    ```
+  </Accordion>
+  
+  <Accordion title="Container won't start">
+    Check Docker logs and container status:
+    
+    ```bash
+    docker logs ros2-kilted
+    docker inspect ros2-kilted
+    ```
+  </Accordion>
+  
+  <Accordion title="GUI applications not working">
+    Ensure X11 forwarding is configured:
+    
+    **macOS:**
+    ```bash
+    # Install XQuartz
+    brew install --cask xquartz
+    
+    # Allow connections from localhost
+    xhost + localhost
+    ```
+    
+    **Linux:**
+    ```bash
+    # Allow Docker to access X server
+    xhost +local:docker
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## File Locations
+
+| Component | Location |
+|-----------|----------|
+| Dockerfile | `~/.ros2-installer/docker/Dockerfile` |
+| Wrapper script | `~/.local/bin/ros2` (macOS) or `/usr/local/bin/ros2` (Linux) |
+| Container workspace | `/root/ros2_ws` (mounted from host) |
+| Host workspace | `~/ros2_ws` (default, configurable) |
+| Docker image | `ros2-installer/{distro}:latest` |
+| Container name | `ros2-{distro}` (default: `ros2-kilted`) |
+
+<Warning>
+  The wrapper script requires the Docker container to exist. If you delete the container, you'll need to re-run the installer.
+</Warning>

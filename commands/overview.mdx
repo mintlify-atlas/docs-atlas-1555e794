@@ -1,0 +1,117 @@
+---
+title: CLI Overview
+description: Overview of the ROS2 Installer CLI command-line interface
+---
+
+The ROS2 Installer CLI provides a powerful command-line interface for installing and configuring ROS2 on Ubuntu and non-Ubuntu systems.
+
+## Basic Usage
+
+The installer automatically detects your operating system and chooses the appropriate installation method:
+
+- **Ubuntu systems**: Native installation with apt packages
+- **Non-Ubuntu systems**: Docker-based installation
+
+```bash
+# Basic installation (requires sudo on Ubuntu)
+sudo python3 ros2_installer_cli.py
+
+# On macOS or other non-Ubuntu systems (no sudo needed)
+python3 ros2_installer_cli.py
+```
+
+## Installation Modes
+
+### Native Installation (Ubuntu)
+
+On Ubuntu 24.04, the installer:
+- Adds ROS2 repositories
+- Installs ROS2 packages via apt
+- Configures environment in ~/.bashrc
+- Sets up development tools (rosdep, colcon, etc.)
+
+### Docker Installation (Non-Ubuntu)
+
+On macOS and other Linux distributions, the installer:
+- Installs Docker (if not present)
+- Builds a ROS2 Docker image
+- Creates a persistent container
+- Installs a `ros2` wrapper command
+
+## Command Structure
+
+```bash
+python3 ros2_installer_cli.py [OPTIONS]
+```
+
+### Common Options
+
+- `--config, -c`: Specify a custom configuration file
+- `--ros-distro, -d`: Choose ROS distribution
+- `--package-set, -p`: Select package set to install
+- `--silent, -s`: Skip user confirmation prompts
+- `--log-level, -l`: Set logging verbosity
+
+### Validation and Testing
+
+- `--validate-only`: Check system requirements without installing
+- `--dry-run`: Simulate installation without making changes
+- `--show-config`: Display current configuration
+
+## Quick Start Examples
+
+<CardGroup cols={2}>
+  <Card title="Default Installation" icon="rocket">
+    ```bash
+    sudo python3 ros2_installer_cli.py
+    ```
+  </Card>
+  
+  <Card title="Custom Distribution" icon="gear">
+    ```bash
+    sudo python3 ros2_installer_cli.py --ros-distro jazzy
+    ```
+  </Card>
+  
+  <Card title="Minimal Install" icon="box">
+    ```bash
+    sudo python3 ros2_installer_cli.py --package-set minimal
+    ```
+  </Card>
+  
+  <Card title="Validate System" icon="check">
+    ```bash
+    python3 ros2_installer_cli.py --validate-only
+    ```
+  </Card>
+</CardGroup>
+
+## Configuration
+
+The installer uses a YAML configuration file (`config_cli.yaml` by default) that controls:
+
+- Installation parameters (distro, package set, parallel jobs)
+- System settings (update behavior, dependencies)
+- Logging configuration
+- Validation requirements
+- Performance optimization
+- Security settings
+
+You can create custom configurations and specify them with `--config`.
+
+## Exit Codes
+
+- `0`: Success
+- `1`: Failure or validation error
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Options Reference" icon="list" href="/commands/options">
+    Complete reference of all command-line flags
+  </Card>
+  
+  <Card title="Usage Examples" icon="code" href="/commands/examples">
+    Real-world usage scenarios and examples
+  </Card>
+</CardGroup>

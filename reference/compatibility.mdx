@@ -1,0 +1,317 @@
+---
+title: Platform Compatibility
+description: Operating system compatibility matrix and installation modes for ROS2 Kilted Kaiju
+---
+
+The ROS2 Installer CLI supports multiple operating systems through two installation modes: **native installation** for Ubuntu and **Docker-based installation** for all other platforms.
+
+## Installation Modes
+
+The installer automatically detects your operating system and selects the appropriate installation mode (ros2_installer_cli.py:291-293, 914-918).
+
+### Native Installation
+
+- Direct installation on the host system
+- Full hardware access and performance
+- Installs ROS2 packages via APT
+- Modifies system configuration files
+
+### Docker Installation
+
+- Containerized ROS2 environment
+- Isolated from host system
+- Uses official ROS2 Docker images
+- Provides a `ros2` wrapper command
+
+## Compatibility Matrix
+
+<table>
+  <thead>
+    <tr>
+      <th>Operating System</th>
+      <th>Version</th>
+      <th>Installation Mode</th>
+      <th>Status</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Ubuntu</strong></td>
+      <td>24.04 LTS</td>
+      <td>Native</td>
+      <td>✅ Fully Supported</td>
+      <td>Recommended platform</td>
+    </tr>
+    <tr>
+      <td><strong>macOS</strong></td>
+      <td>Any (Darwin)</td>
+      <td>Docker</td>
+      <td>✅ Fully Supported</td>
+      <td>Requires Homebrew for Docker installation</td>
+    </tr>
+    <tr>
+      <td><strong>Debian</strong></td>
+      <td>Latest</td>
+      <td>Docker</td>
+      <td>✅ Fully Supported</td>
+      <td>Automatic Docker installation</td>
+    </tr>
+    <tr>
+      <td><strong>Fedora</strong></td>
+      <td>Latest</td>
+      <td>Docker</td>
+      <td>✅ Fully Supported</td>
+      <td>Automatic Docker installation via DNF</td>
+    </tr>
+    <tr>
+      <td><strong>RHEL/CentOS</strong></td>
+      <td>Latest</td>
+      <td>Docker</td>
+      <td>✅ Fully Supported</td>
+      <td>Automatic Docker installation via DNF</td>
+    </tr>
+    <tr>
+      <td><strong>Arch Linux</strong></td>
+      <td>Rolling</td>
+      <td>Docker</td>
+      <td>✅ Fully Supported</td>
+      <td>Automatic Docker installation via Pacman</td>
+    </tr>
+    <tr>
+      <td><strong>Other Linux</strong></td>
+      <td>Any</td>
+      <td>Docker</td>
+      <td>⚠️ Requires Manual Docker Setup</td>
+      <td>Install Docker manually first</td>
+    </tr>
+  </tbody>
+</table>
+
+## Platform-Specific Details
+
+### Ubuntu 24.04 (Native)
+
+**Installation Mode**: Native (ros2_installer_cli.py:287-289, 317-331)
+
+**Requirements**:
+- Ubuntu 24.04 LTS ("Noble Numbat")
+- Root/sudo privileges
+- APT package manager
+
+**What Gets Installed**:
+- ROS2 Kilted packages from official repositories
+- Development tools (colcon, rosdep, vcstool)
+- System dependencies
+- Environment configuration in `~/.bashrc`
+
+**Verification**:
+```bash
+# Check Ubuntu version
+lsb_release -a
+
+# Check if Ubuntu is detected
+sudo python3 ros2_installer_cli.py --validate-only
+```
+
+### macOS (Docker)
+
+**Installation Mode**: Docker (ros2_installer_cli.py:542-570)
+
+**Requirements**:
+- macOS (any recent version)
+- Homebrew package manager
+- Docker Desktop
+
+**Automatic Docker Installation** (ros2_installer_cli.py:552-569):
+1. Checks for Homebrew (`brew`)
+2. Installs Docker via `brew install --cask docker`
+3. Prompts to start Docker Desktop
+4. Waits for Docker daemon to be ready
+
+**Post-Installation**:
+- `ros2` wrapper command installed to `~/.local/bin/`
+- PATH automatically updated in `~/.zshrc` or `~/.bash_profile`
+- Workspace directory at `~/ros2_ws` mounted into container
+
+<Info>
+  On macOS, you must manually open Docker Desktop after installation for the daemon to start.
+</Info>
+
+### Debian (Docker)
+
+**Installation Mode**: Docker (ros2_installer_cli.py:571-587)
+
+**Automatic Docker Installation**:
+```bash
+# Performed automatically by installer
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+# Adds Docker's official GPG key and repository
+# Installs Docker CE and related tools
+```
+
+### Fedora/RHEL (Docker)
+
+**Installation Mode**: Docker (ros2_installer_cli.py:588-595)
+
+**Automatic Docker Installation**:
+```bash
+# Performed automatically by installer
+sudo dnf -y install dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+sudo dnf install -y docker-ce docker-ce-cli containerd.io
+sudo systemctl start docker
+```
+
+### Arch Linux (Docker)
+
+**Installation Mode**: Docker (ros2_installer_cli.py:596-602)
+
+**Automatic Docker Installation**:
+```bash
+# Performed automatically by installer
+sudo pacman -Sy --noconfirm docker
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+### Other Linux Distributions (Docker)
+
+**Installation Mode**: Docker (ros2_installer_cli.py:603-606)
+
+For unsupported Linux distributions:
+
+1. Install Docker manually following [official instructions](https://docs.docker.com/engine/install/)
+2. Ensure Docker daemon is running
+3. Run the ROS2 installer
+
+<Warning>
+  The installer will detect unsupported distributions and prompt you to install Docker manually.
+</Warning>
+
+## Docker Installation Details
+
+### Container Configuration
+
+Docker-based installations use the following configuration (ros2_installer_cli.py:726-761, config_cli.yaml:46-51):
+
+**Container Name**: `ros2-kilted` (configurable)
+
+**Volume Mounts**:
+- Host: `~/ros2_ws`
+- Container: `/root/ros2_ws`
+
+**Network**: Host networking mode (full network access)
+
+**Environment Variables**:
+- `DISPLAY=${DISPLAY:-:0}` - For GUI applications
+- `ROS_DOMAIN_ID=0` - ROS domain ID
+
+### Docker Images Used
+
+The installer uses official ROS2 Docker images (ros2_installer_cli.py:628-645):
+
+| Package Set | Docker Image |
+|-------------|-------------|
+| minimal | `ros:kilted-ros-core` |
+| base | `ros:kilted-ros-base` |
+| desktop | `osrf/ros:kilted-desktop` |
+| desktop-full | `osrf/ros:kilted-desktop-full` |
+
+### ROS2 Wrapper Command
+
+Docker installations include a wrapper script (ros2_installer_cli.py:763-815):
+
+**Location**:
+- macOS: `~/.local/bin/ros2`
+- Linux: `/usr/local/bin/ros2`
+
+**Usage**:
+```bash
+# Interactive shell in container
+ros2
+
+# Run ROS2 commands
+ros2 topic list
+ros2 run demo_nodes_cpp talker
+```
+
+## Architecture Support by Platform
+
+All platforms support the following architectures (ros2_installer_cli.py:140, 313-315):
+
+- **amd64** / **x86_64**: Intel and AMD 64-bit processors
+- **arm64** / **aarch64**: ARM 64-bit processors (including Apple Silicon)
+
+<Check>
+  Check your system architecture:
+  ```bash
+  # Linux/macOS
+  uname -m
+  
+  # Or use Python
+  python3 -c "import platform; print(platform.machine())"
+  ```
+</Check>
+
+## Detection Process
+
+The installer automatically detects your platform (ros2_installer_cli.py:226-285):
+
+1. **OS Detection**: Uses `platform.system()` to identify OS
+2. **Distribution Detection**: Reads `/etc/os-release` on Linux
+3. **Architecture Detection**: Uses `platform.machine()`
+4. **Mode Selection**: Ubuntu → Native, Others → Docker
+
+### Manual Mode Override
+
+You cannot manually override the installation mode, but you can:
+
+- On Ubuntu: Install Docker yourself and use manual Docker commands
+- On other systems: Not recommended to bypass Docker mode
+
+## Troubleshooting
+
+### Ubuntu Not Detected
+
+If Ubuntu 24.04 is not properly detected:
+
+```bash
+# Verify OS release file
+cat /etc/os-release
+
+# Should contain "ubuntu"
+```
+
+### Docker Installation Fails
+
+If automatic Docker installation fails:
+
+1. Install Docker manually for your distribution
+2. Verify Docker is running: `docker info`
+3. Re-run the installer
+
+### Unsupported Distribution
+
+If your distribution is not listed:
+
+1. Install Docker manually
+2. The installer will use Docker mode automatically
+3. Report the distribution for future support
+
+## Configuration
+
+Customize platform-specific settings in `config_cli.yaml`:
+
+```yaml
+# Ubuntu native installation
+validation:
+  required_ubuntu_version: "24.04"
+
+# Docker configuration (non-Ubuntu)
+docker:
+  container_name: "ros2-kilted"
+  workspace_dir: "~/ros2_ws"
+  network_mode: "host"
+```
